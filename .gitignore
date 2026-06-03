@@ -1,0 +1,10 @@
+node_modules/
+dist/
+API Monitor*.exe
+.env
+*.log
+AGENT_CHANGELOG.log
+.DS_Store
+Thumbs.db
+.claude/
+REPO_OVERVIEW.md

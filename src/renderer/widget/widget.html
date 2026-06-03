@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="widget.css">
+</head>
+<body>
+  <div id="window-wrapper">
+    <!-- Entry selector dropdown (expands upward) -->
+    <div id="entry-dropdown" class="entry-dropdown hidden">
+      <div class="dropdown-search">
+        <input type="text" id="dropdown-search-input" placeholder="Search..." autocomplete="off">
+      </div>
+      <div id="dropdown-list" class="dropdown-list"></div>
+    </div>
+
+    <!-- Main widget -->
+    <div id="widget">
+      <div class="header">
+        <div class="nav-group">
+          <button id="btn-prev" class="nav-btn hidden" title="Previous">&#x25C0;</button>
+          <span id="entry-logo" class="logo"></span>
+          <span id="entry-title" class="title" title="Click to switch">API Monitor</span>
+          <button id="btn-next" class="nav-btn hidden" title="Next">&#x25B6;</button>
+        </div>
+        <div class="header-btns">
+          <button id="btn-settings" title="Settings">&#x2699;</button>
+          <button id="btn-minimize" title="Hide to tray">&#x2212;</button>
+          <button id="btn-exit" title="Exit">&#x2715;</button>
+        </div>
+      </div>
+      <div class="content">
+        <div id="balance-view">
+          <div class="balance-row">
+            <span class="label" id="lbl-total">Total Balance</span>
+            <span class="value" id="val-total">--</span>
+          </div>
+          <div class="balance-row">
+            <span class="label" id="lbl-granted">Granted</span>
+            <span class="value" id="val-granted">--</span>
+          </div>
+          <div class="balance-row">
+            <span class="label" id="lbl-topped">Topped Up</span>
+            <span class="value" id="val-topped">--</span>
+          </div>
+          <div id="error-message" class="error hidden"></div>
+        </div>
+        <div id="codex-view" style="display:none">
+          <div class="codex-section">
+            <div class="codex-row-header">
+              <span class="codex-label" id="lbl-5h">5h Usage</span>
+              <span class="codex-pct" id="val-5h-pct">--</span>
+            </div>
+            <div class="codex-bar"><div class="codex-bar-fill" id="bar-5h"></div></div>
+            <div class="codex-reset">
+              <svg class="ring-svg" viewBox="0 0 22 22">
+                <circle cx="11" cy="11" r="8" class="ring-bg"/>
+                <circle cx="11" cy="11" r="8" class="ring-fg" id="ring-5h"/>
+              </svg>
+              <span class="reset-text" id="reset-5h">--</span>
+            </div>
+          </div>
+          <div class="codex-section">
+            <div class="codex-row-header">
+              <span class="codex-label" id="lbl-7d">7d Usage</span>
+              <span class="codex-pct" id="val-7d-pct">--</span>
+            </div>
+            <div class="codex-bar"><div class="codex-bar-fill" id="bar-7d"></div></div>
+            <div class="codex-reset">
+              <svg class="ring-svg" viewBox="0 0 22 22">
+                <circle cx="11" cy="11" r="8" class="ring-bg"/>
+                <circle cx="11" cy="11" r="8" class="ring-fg" id="ring-7d"/>
+              </svg>
+              <span class="reset-text" id="reset-7d">--</span>
+            </div>
+          </div>
+          <div class="codex-credits">
+            <span class="codex-label" id="lbl-credits">Credits</span>
+            <span class="codex-value" id="val-credits">--</span>
+          </div>
+          <div id="error-message-codex" class="error hidden"></div>
+        </div>
+        <div id="empty-view" class="hidden">
+          <p id="empty-msg">No entries configured.</p>
+          <button id="btn-open-settings">Open Settings</button>
+        </div>
+      </div>
+      <div class="footer">
+        <button id="btn-refresh">&#x21bb; Refresh</button>
+        <span id="status-text"></span>
+      </div>
+      <div id="update-banner" class="update-banner hidden">
+        <span id="update-text"></span>
+        <button id="update-action"></button>
+      </div>
+    </div>
+  </div>
+  <script src="widget.js"></script>
+</body>
+</html>

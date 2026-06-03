@@ -1,0 +1,48 @@
+appId: com.deepseek.api-monitor
+productName: API Monitor
+copyright: Copyright (c) 2026
+
+directories:
+  output: dist
+  buildResources: assets
+
+files:
+  - src/**/*
+  - assets/**/*
+  - package.json
+  - "!test-*"
+  - "!REPO_OVERVIEW.md"
+
+# Enable this after publishing through GitHub Releases:
+# publish:
+#   - provider: github
+#     owner: <your-github-username>
+#     repo: <your-repo-name>
+publish: null
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: assets/icon.ico
+  sign: null
+
+nsis:
+  oneClick: false
+  perMachine: true
+  allowElevation: true
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: false
+  createStartMenuShortcut: true
+  deleteAppDataOnUninstall: true
+  shortcutName: API Monitor
+  menuCategory: API Monitor
+  include: installer.nsh
+  warningsAsErrors: false
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  installerHeaderIcon: assets/icon.ico

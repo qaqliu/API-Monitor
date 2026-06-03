@@ -1,0 +1,22 @@
+{
+  "name": "api-monitor",
+  "version": "1.0.0",
+  "description": "API 余额监控桌面组件",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder --win",
+    "postbuild": "echo 'Output: dist/DeepSeek API Monitor x.x.x.exe'"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.0"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.3"
+  }
+}
