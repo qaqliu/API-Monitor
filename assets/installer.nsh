@@ -234,6 +234,13 @@ FunctionEnd
 !macro customRemoveFiles
   SetOutPath "$TEMP"
   Delete "$DESKTOP\API Monitor.lnk"
+  ${GetParameters} $R0
+  ${GetOptions} $R0 "--updated" $R1
+  ${IfNot} ${Errors}
+    DetailPrint "Skipping install directory cleanup during update."
+    Goto custom_remove_done
+  ${EndIf}
+
   ; Async VBScript waits until the uninstaller exits, retries $INSTDIR, then removes an empty parent "API Monitor" folder left by old double-nested installs.
   FileOpen $0 "$TEMP\api_mon_cleanup.vbs" w
   FileWrite $0 "On Error Resume Next$\r$\n"
@@ -256,4 +263,6 @@ FunctionEnd
   FileWrite $0 "fso.DeleteFile scriptPath, True$\r$\n"
   FileClose $0
   ExecShell "open" "wscript.exe" "$TEMP\api_mon_cleanup.vbs" SW_HIDE
+
+  custom_remove_done:
 !macroend
