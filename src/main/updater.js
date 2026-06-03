@@ -1,6 +1,7 @@
 const { autoUpdater } = require('electron-updater');
 const { BrowserWindow, app } = require('electron');
-const path = require('path');
+const { spawn } = require('child_process');
+const fs = require('fs');
 
 let widgetWindow = null;
 
@@ -17,9 +18,6 @@ function initUpdater(widgetWin) {
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
-  if (app.isPackaged) {
-    autoUpdater.installDirectory = path.dirname(process.execPath);
-  }
 
   autoUpdater.on('update-available', (info) => {
     updateStatus.state = 'available';
@@ -120,11 +118,39 @@ function downloadUpdate() {
 }
 
 function quitAndInstall() {
+  const installerPath = getDownloadedInstallerPath();
+  if (!installerPath) {
+    const message = 'Downloaded installer not found. Please download the update again.';
+    updateStatus.state = 'error';
+    updateStatus.message = message;
+    broadcastUpdateEvent('update-error', { message });
+    return;
+  }
+
   app.isQuitting = true;
   BrowserWindow.getAllWindows()
     .filter(win => !win.isDestroyed())
     .forEach(win => win.removeAllListeners('close'));
-  setImmediate(() => autoUpdater.quitAndInstall(false, true));
+
+  const child = spawn(installerPath, ['--updated', '--force-run'], {
+    detached: true,
+    stdio: 'ignore',
+  });
+  child.unref();
+
+  setImmediate(() => app.quit());
+}
+
+function getDownloadedInstallerPath() {
+  const file = updateStatus.files.find(item => typeof item === 'string' && item.toLowerCase().endsWith('.exe'));
+  if (file && fs.existsSync(file)) return file;
+
+  const updaterInstallerPath = autoUpdater.installerPath;
+  if (updaterInstallerPath && fs.existsSync(updaterInstallerPath)) {
+    return updaterInstallerPath;
+  }
+
+  return null;
 }
 
 module.exports = { initUpdater, checkForUpdates, downloadUpdate, quitAndInstall, getUpdateStatus };

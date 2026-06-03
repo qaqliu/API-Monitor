@@ -8,6 +8,7 @@ Var PreviousInstallDir
 ; Set default install directory to avoid double-nesting
 !ifndef BUILD_UNINSTALLER
 !macro customInit
+  SetRegView 64
   StrCpy $CreateDesktopShortcutChoice "1"
   StrCpy $SkipVerifyInstDir "0"
   StrCpy $PreviousInstallDir ""
@@ -26,6 +27,7 @@ Var PreviousInstallDir
 
   ${If} $PreviousInstallDir != ""
     StrCpy $INSTDIR "$PreviousInstallDir"
+    DetailPrint "Using previous install directory: $INSTDIR"
   ${ElseIfNot} ${isUpdated}
     StrCpy $INSTDIR "$PROGRAMFILES64\API Monitor"
   ${EndIf}
@@ -132,6 +134,9 @@ FunctionEnd
 
 !ifndef BUILD_UNINSTALLER
 Function DesktopShortcutPageShow
+  StrCmp $SkipVerifyInstDir "1" 0 +2
+  Abort
+
   nsDialogs::Create 1018
   Pop $0
   ${If} $0 == error
