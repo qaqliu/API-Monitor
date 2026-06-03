@@ -26,7 +26,7 @@ function createWidgetWindow() {
     y: screenHeight - 360,
     frame: false,
     transparent: true,
-    alwaysOnTop: true,
+    alwaysOnTop: 'screen-saver',
     skipTaskbar: true,
     resizable: false,
     backgroundColor: '#00000000',
@@ -44,6 +44,10 @@ function createWidgetWindow() {
   widgetWindow.on('moved', () => {
     const [x, y] = widgetWindow.getPosition();
     setWindowPosition(x, y);
+  });
+
+  widgetWindow.on('show', () => {
+    widgetWindow.setAlwaysOnTop(true, 'screen-saver');
   });
 
   widgetWindow.on('close', (event) => {
@@ -78,6 +82,11 @@ function createSettingsWindow() {
   settingsWindow.loadFile(path.join(__dirname, '..', 'renderer', 'settings', 'settings.html'));
   settingsWindow.setMenu(null);
   setSettingsWindow(settingsWindow);
+
+  // 打开设置窗口后重新断言悬浮窗置顶，防止焦点转移导致 z-order 丢失
+  if (widgetWindow && !widgetWindow.isDestroyed()) {
+    widgetWindow.setAlwaysOnTop(true, 'screen-saver');
+  }
 
   settingsWindow.on('closed', () => {
     settingsWindow = null;
