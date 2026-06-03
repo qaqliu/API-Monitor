@@ -41,6 +41,10 @@ npm run build
 
 Output goes to `dist/` — both a portable `.exe` and an NSIS installer.
 
+### Versioning
+
+Official releases use `x.y.z` versions. Increment `x` for architecture-level refactors, `y` when adding a new provider/model type, and `z` for existing provider changes, fixes, docs, and smaller maintenance updates. See [VERSIONING.md](VERSIONING.md).
+
 ### Adding a provider
 
 1. Create `src/services/providers/<name>.js` exporting:
@@ -102,6 +106,10 @@ npm run build
 ```
 
 产物在 `dist/` 目录 —— 包含便携版 `.exe` 和 NSIS 安装程序。
+
+### 版本规则
+
+正式发布使用 `x.y.z` 版本号。架构级重构时递增 `x`，新增 Provider/模型类型时递增 `y`，修改已有 Provider、修复、文档和更小维护更新时递增 `z`。详见 [VERSIONING.md](VERSIONING.md)。
 
 ### 新增 Provider
 
