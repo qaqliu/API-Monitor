@@ -3,6 +3,7 @@
 
 const PROVIDER_ID = 'deepseek';
 const PROVIDER_NAME = 'DeepSeek';
+const { fetchJsonWithRetry } = require('./http');
 
 // inline SVG: official DeepSeek whale logo
 const LOGO = `<svg viewBox="0 0 64 47" xmlns="http://www.w3.org/2000/svg">
@@ -10,21 +11,16 @@ const LOGO = `<svg viewBox="0 0 64 47" xmlns="http://www.w3.org/2000/svg">
 </svg>`;
 
 async function fetchBalance(apiKey) {
-  let response;
-  try {
-    response = await fetch('https://api.deepseek.com/user/balance', {
+  const { response, data } = await fetchJsonWithRetry(
+    'https://api.deepseek.com/user/balance',
+    {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Accept': 'application/json',
       },
-    });
-  } catch {
-    throw Object.assign(
-      new Error('Network error. Check your connection.'),
-      { code: 'NETWORK' }
-    );
-  }
+    }
+  );
 
   if (response.status === 401 || response.status === 403) {
     throw Object.assign(
@@ -37,16 +33,6 @@ async function fetchBalance(apiKey) {
     throw Object.assign(
       new Error(`API error: ${response.status} ${response.statusText}`),
       { code: 'API_ERROR', status: response.status }
-    );
-  }
-
-  let data;
-  try {
-    data = await response.json();
-  } catch {
-    throw Object.assign(
-      new Error('Unexpected API response format.'),
-      { code: 'PARSE_ERROR' }
     );
   }
 
@@ -66,11 +52,16 @@ async function fetchBalance(apiKey) {
   }
 
   return {
-    total_balance: parseFloat(cnyBalance.total_balance),
-    granted_balance: parseFloat(cnyBalance.granted_balance),
-    topped_up_balance: parseFloat(cnyBalance.topped_up_balance),
+    total_balance: safeNumber(cnyBalance.total_balance),
+    granted_balance: safeNumber(cnyBalance.granted_balance),
+    topped_up_balance: safeNumber(cnyBalance.topped_up_balance),
     currency: 'CNY',
   };
+}
+
+function safeNumber(value) {
+  const n = parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 module.exports = {

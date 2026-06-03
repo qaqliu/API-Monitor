@@ -2,6 +2,7 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const { fetchJsonWithRetry } = require('./http');
 
 const PROVIDER_ID = 'codex';
 const PROVIDER_NAME = 'Codex (ChatGPT)';
@@ -47,22 +48,17 @@ async function fetchBalance(apiKey) {
     );
   }
 
-  let response;
-  try {
-    response = await fetch('https://chatgpt.com/backend-api/wham/usage', {
+  const { response, data } = await fetchJsonWithRetry(
+    'https://chatgpt.com/backend-api/wham/usage',
+    {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
       },
-    });
-  } catch {
-    throw Object.assign(
-      new Error('Network error. Check your connection.'),
-      { code: 'NETWORK' }
-    );
-  }
+    }
+  );
 
   if (response.status === 401 || response.status === 403) {
     throw Object.assign(
@@ -78,16 +74,6 @@ async function fetchBalance(apiKey) {
     );
   }
 
-  let data;
-  try {
-    data = await response.json();
-  } catch {
-    throw Object.assign(
-      new Error('Unexpected API response format.'),
-      { code: 'PARSE_ERROR' }
-    );
-  }
-
   const rateLimit = data.rate_limit || {};
   const primary = rateLimit.primary_window || {};
   const secondary = rateLimit.secondary_window || {};
@@ -100,11 +86,16 @@ async function fetchBalance(apiKey) {
     secondary_used_percent: secondary.used_percent ?? null,
     secondary_reset_at: secondary.reset_at ?? null,
     secondary_reset_after_seconds: secondary.reset_after_seconds ?? null,
-    credits_balance: parseFloat(credits.balance) || 0,
+    credits_balance: safeNumber(credits.balance),
     credits_has_credits: credits.has_credits || false,
     credits_unlimited: credits.unlimited || false,
     provider: 'codex',
   };
+}
+
+function safeNumber(value) {
+  const n = parseFloat(value);
+  return Number.isFinite(n) ? n : 0;
 }
 
 module.exports = {
