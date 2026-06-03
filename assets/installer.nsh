@@ -2,11 +2,24 @@
 
 Var CreateDesktopShortcutCheckbox
 Var CreateDesktopShortcutChoice
+Var SkipVerifyInstDir
 
 ; Set default install directory to avoid double-nesting
 !macro customInit
   StrCpy $CreateDesktopShortcutChoice "1"
-  ${IfNot} ${isUpdated}
+  StrCpy $SkipVerifyInstDir "0"
+  ${If} ${isUpdated}
+    StrCpy $SkipVerifyInstDir "1"
+  ${EndIf}
+
+  ReadRegStr $0 HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${If} $0 == ""
+    ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  ${EndIf}
+
+  ${If} $0 != ""
+    StrCpy $INSTDIR "$0"
+  ${ElseIfNot} ${isUpdated}
     StrCpy $INSTDIR "$PROGRAMFILES64\API Monitor"
   ${EndIf}
 !macroend
@@ -50,7 +63,9 @@ FunctionEnd
 !endif
 
 ; Auto-append "API Monitor" when user browses to a directory that doesn't already end with it
+!ifndef BUILD_UNINSTALLER
 Function .onVerifyInstDir
+  StrCmp $SkipVerifyInstDir "1" done
   StrCmp $INSTDIR "" done
 
   StrCpy $1 $INSTDIR
@@ -72,6 +87,7 @@ Function .onVerifyInstDir
 
   done:
 FunctionEnd
+!endif
 
 ; Create desktop shortcut after all files are installed (exe + icon both available)
 !macro customInstall
