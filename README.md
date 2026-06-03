@@ -28,9 +28,9 @@ A lightweight desktop widget for tracking API usage and quotas. Extensible provi
 
 ### Install
 
-Download the latest `API Monitor x.x.x.exe` from [Releases]() and run it. No install needed.
+Download the latest installer (`API-Monitor-Setup-x.x.x.exe`) from [Releases](https://github.com/qaqliu/API-Monitor/releases) and run it.
 
-Or use the NSIS installer (`API Monitor Setup x.x.x.exe`) for Start Menu shortcuts and uninstall support.
+The portable build (`API-Monitor-x.x.x.exe`) is also available there if you prefer running a single `.exe` without installation.
 
 ### Build from source
 
@@ -90,9 +90,9 @@ MIT
 
 ### 安装
 
-从 [Releases]() 下载最新 `API Monitor x.x.x.exe`，直接运行即可，无需安装。
+从 [Releases](https://github.com/qaqliu/API-Monitor/releases) 下载最新安装程序（`API-Monitor-Setup-x.x.x.exe`）并运行。
 
-也可使用 NSIS 安装程序（`API Monitor Setup x.x.x.exe`），获得开始菜单快捷方式和卸载支持。
+如果你更喜欢无需安装的单文件版本，也可以下载便携版（`API-Monitor-x.x.x.exe`）直接运行。
 
 ### 从源码构建
 
