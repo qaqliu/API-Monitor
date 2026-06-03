@@ -148,9 +148,11 @@ function setLoading() {
   });
   elError.classList.add('hidden');
   // Codex
-  [elPct5h, elPct7d].forEach(el => { el.textContent = '--'; });
+  [elPct5h, elPct7d].forEach(el => { el.textContent = '--'; el.style.color = ''; });
   elBar5h.style.width = '0%';
+  elBar5h.style.backgroundColor = '';
   elBar7d.style.width = '0%';
+  elBar7d.style.backgroundColor = '';
   setRingProgress(elRing5h, 0);
   setRingProgress(elRing7d, 0);
   elReset5h.textContent = '--';
@@ -179,12 +181,16 @@ function displayCodexBalance(b) {
   // 5h
   const pPct = b.primary_used_percent;
   elPct5h.textContent = pPct != null ? `${pPct}%` : '--';
+  elPct5h.style.color = pctColor(pPct);
   elBar5h.style.width = pPct != null ? `${Math.min(pPct, 100)}%` : '0%';
+  elBar5h.style.backgroundColor = pctColor(pPct);
   renderCodexReset(elRing5h, elReset5h, b.primary_reset_after_seconds, 18000, false);
   // 7d
   const sPct = b.secondary_used_percent;
   elPct7d.textContent = sPct != null ? `${sPct}%` : '--';
+  elPct7d.style.color = pctColor(sPct);
   elBar7d.style.width = sPct != null ? `${Math.min(sPct, 100)}%` : '0%';
+  elBar7d.style.backgroundColor = pctColor(sPct);
   renderCodexReset(elRing7d, elReset7d, b.secondary_reset_after_seconds, 604800, true);
   // Credits
   elCredits.textContent = `$${(b.credits_balance || 0).toFixed(2)}`;
@@ -193,6 +199,13 @@ function displayCodexBalance(b) {
 
 // --- Codex helpers ---
 const RING_CIRC = 2 * Math.PI * 8; // r=8 → ~50.27
+
+function pctColor(pct) {
+  if (pct == null) return '#4caf84';
+  if (pct >= 90) return '#e05050';
+  if (pct >= 70) return '#e6a817';
+  return '#4caf84';
+}
 
 function setRingProgress(el, fraction) {
   const offset = RING_CIRC * (1 - Math.min(Math.max(fraction, 0), 1));
@@ -227,7 +240,9 @@ function displayError(code, message) {
   if (entry && entry.provider === 'codex') {
     elCodexView.style.display = '';
     elPct5h.textContent = '--'; elPct7d.textContent = '--';
+    elPct5h.style.color = ''; elPct7d.style.color = '';
     elBar5h.style.width = '0%'; elBar7d.style.width = '0%';
+    elBar5h.style.backgroundColor = ''; elBar7d.style.backgroundColor = '';
     setRingProgress(elRing5h, 0); setRingProgress(elRing7d, 0);
     elReset5h.textContent = '--'; elReset7d.textContent = '--';
     elCredits.textContent = '--';
@@ -387,6 +402,7 @@ btnSettings.addEventListener('click', () => window.api.openSettings());
 btnMinimize.addEventListener('click', () => window.api.minimizeWindow());
 document.getElementById('btn-exit').addEventListener('click', () => window.api.quitApp());
 document.getElementById('btn-open-settings').addEventListener('click', () => window.api.openSettings());
+document.getElementById('update-dismiss').addEventListener('click', () => hideUpdateBanner());
 
 function escapeHtml(str) {
   const div = document.createElement('div');

@@ -4,6 +4,7 @@ Var CreateDesktopShortcutCheckbox
 Var CreateDesktopShortcutChoice
 Var SkipVerifyInstDir
 Var PreviousInstallDir
+Var ClearUserDataChoice
 
 ; Set default install directory to avoid double-nesting
 !ifndef BUILD_UNINSTALLER
@@ -214,6 +215,19 @@ FunctionEnd
   nsExec::ExecToStack 'taskkill /f /im "API Monitor.exe"'
   Pop $0
   Sleep 1500
+  ; Clear user data if the checkbox was checked during uninstall
+  ${If} ${FileExists} "$TEMP\api_mon_clear_data"
+    DetailPrint "Clearing user data..."
+    ${If} $installMode == "all"
+      SetShellVarContext current
+    ${EndIf}
+    RMDir /r "$APPDATA\API Monitor"
+    RMDir /r "$APPDATA\api-monitor"
+    ${If} $installMode == "all"
+      SetShellVarContext all
+    ${EndIf}
+    Delete "$TEMP\api_mon_clear_data"
+  ${EndIf}
   ; Close Explorer windows showing the install folder so it can be deleted
   FileOpen $0 "$TEMP\close_explorer.vbs" w
   FileWrite $0 "On Error Resume Next$\r$\n"
@@ -229,6 +243,40 @@ FunctionEnd
   Sleep 1000
   Delete "$DESKTOP\API Monitor.lnk"
 !macroend
+
+; Uninstall custom page — ask whether to clear user data
+!ifdef BUILD_UNINSTALLER
+PageEx un.custom
+  PageCallbacks un.UnDataClearPageShow un.UnDataClearPageLeave
+  Caption "Additional Options"
+PageExEnd
+
+Function un.UnDataClearPageShow
+  nsDialogs::Create 1018
+  Pop $0
+  ${If} $0 == error
+    Abort
+  ${EndIf}
+
+  ${NSD_CreateLabel} 0u 0u 100% 24u "Choose additional options for uninstall."
+  Pop $0
+
+  ${NSD_CreateCheckbox} 0u 34u 100% 16u "同时清除用户数据（保存的 API Key 与配置）"
+  Pop $ClearUserDataChoice
+
+  SendMessage $ClearUserDataChoice ${BM_SETCHECK} ${BST_UNCHECKED} 0
+
+  nsDialogs::Show
+FunctionEnd
+
+Function un.UnDataClearPageLeave
+  SendMessage $ClearUserDataChoice ${BM_GETCHECK} 0 0 $0
+  ${If} $0 == ${BST_CHECKED}
+    FileOpen $1 "$TEMP\api_mon_clear_data" w
+    FileClose $1
+  ${EndIf}
+FunctionEnd
+!endif
 
 ; Final cleanup — spawn async VBS to delete install dir after uninstaller exits (no reboot)
 !macro customRemoveFiles

@@ -415,6 +415,23 @@ body {
 
 .update-banner button:hover { background: rgba(76, 175, 180, 0.35); }
 
+#update-dismiss {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+#update-dismiss:hover {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.15);
+}
+
 /* --- Codex view --- */
 #balance-view {
   display: flex;
