@@ -1,5 +1,6 @@
 const { autoUpdater } = require('electron-updater');
 const { BrowserWindow, app } = require('electron');
+const path = require('path');
 
 let widgetWindow = null;
 
@@ -16,6 +17,9 @@ function initUpdater(widgetWin) {
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = false;
+  if (app.isPackaged) {
+    autoUpdater.installDirectory = path.dirname(process.execPath);
+  }
 
   autoUpdater.on('update-available', (info) => {
     updateStatus.state = 'available';
