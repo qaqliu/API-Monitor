@@ -2,6 +2,7 @@ const { autoUpdater } = require('electron-updater');
 const { BrowserWindow, app } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 
 let widgetWindow = null;
 
@@ -132,13 +133,34 @@ function quitAndInstall() {
     .filter(win => !win.isDestroyed())
     .forEach(win => win.removeAllListeners('close'));
 
-  const child = spawn(installerPath, ['--updated', '--force-run'], {
+  launchInstaller(installerPath);
+}
+
+function launchInstaller(installerPath) {
+  const elevatePath = path.join(process.resourcesPath, 'elevate.exe');
+  const command = fs.existsSync(elevatePath) ? elevatePath : installerPath;
+  const args = fs.existsSync(elevatePath)
+    ? [installerPath, '--updated', '--force-run']
+    : ['--updated', '--force-run'];
+
+  const child = spawn(command, args, {
     detached: true,
     stdio: 'ignore',
+    windowsHide: false,
   });
-  child.unref();
 
-  setImmediate(() => app.quit());
+  child.once('error', (err) => {
+    app.isQuitting = false;
+    const message = err && err.message ? err.message : 'Failed to launch update installer.';
+    updateStatus.state = 'error';
+    updateStatus.message = message;
+    broadcastUpdateEvent('update-error', { message });
+  });
+
+  child.once('spawn', () => {
+    child.unref();
+    setImmediate(() => app.quit());
+  });
 }
 
 function getDownloadedInstallerPath() {
