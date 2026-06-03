@@ -180,16 +180,18 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
   });
 
   // --- Updater ---
-  const { downloadUpdate, quitAndInstall } = require('./updater');
+  const { downloadUpdate, getUpdateStatus, quitAndInstall } = require('./updater');
+
+  ipcMain.handle('get-update-status', () => getUpdateStatus());
 
   ipcMain.handle('check-for-updates', async () => {
     const { checkForUpdates } = require('./updater');
-    checkForUpdates();
+    await checkForUpdates({ manual: true });
     return { success: true };
   });
 
   ipcMain.handle('download-update', async () => {
-    downloadUpdate();
+    await downloadUpdate();
     return { success: true };
   });
 

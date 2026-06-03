@@ -9,9 +9,18 @@ const elEntryInterval = document.getElementById('entry-interval');
 const elToggleKey = document.getElementById('btn-toggle-key');
 const elBrowseKey = document.getElementById('btn-browse-key');
 const elLangSelect = document.getElementById('language-select');
+const elCurrentVersion = document.getElementById('current-version');
+const elUpdateStatus = document.getElementById('update-status');
+const elCheckUpdate = document.getElementById('btn-check-update');
+const elDownloadUpdate = document.getElementById('btn-download-update');
+const elInstallUpdate = document.getElementById('btn-install-update');
 let editingId = null;
 let entriesCache = [];
 let currentLang = 'zh-CN';
+let updateCleanups = [];
+let updateAvailable = false;
+let updateStatusKey = 'updateReady';
+let updateStatusValues = {};
 
 // Lightweight i18n — loaded from main process
 const T = {
@@ -29,6 +38,16 @@ const T = {
     refreshInterval: 'Refresh Interval', useDefault: 'Use default',
     cancel: 'Cancel', save: 'Save', edit: 'Edit', delete: 'Delete',
     unnamed: 'Unnamed', defaultLower: 'default',
+    updates: 'Updates', currentVersion: 'Current Version',
+    updateReady: 'Ready to check for updates.',
+    updateChecking: 'Checking for updates...',
+    updateAvailable: 'Version {version} is available.',
+    updateNotAvailable: 'You are using the latest version.',
+    updateDownloading: 'Downloading... {percent}%',
+    updateDownloaded: 'Update downloaded. Restart to install.',
+    updateDevMode: 'Updates are only available in packaged builds.',
+    updateFailed: 'Update failed: {message}',
+    checkUpdates: 'Check for Updates', download: 'Download', restart: 'Restart',
   },
   'zh-CN': {
     settings: '设置', general: '通用', monitor: '监控',
@@ -44,10 +63,27 @@ const T = {
     refreshInterval: '刷新间隔', useDefault: '使用默认',
     cancel: '取消', save: '保存', edit: '编辑', delete: '删除',
     unnamed: '未命名', defaultLower: '默认',
+    updates: '更新', currentVersion: '当前版本',
+    updateReady: '可手动检查更新。',
+    updateChecking: '正在检查更新...',
+    updateAvailable: '发现新版本 {version}。',
+    updateNotAvailable: '当前已是最新版本。',
+    updateDownloading: '正在下载... {percent}%',
+    updateDownloaded: '更新已下载，重启后安装。',
+    updateDevMode: '仅打包后的正式版本支持检查更新。',
+    updateFailed: '更新失败：{message}',
+    checkUpdates: '检查更新', download: '下载', restart: '重启安装',
   },
 };
 
 function t(key) { return (T[currentLang] && T[currentLang][key]) || T.en[key] || key; }
+
+function tf(key, values) {
+  return Object.entries(values || {}).reduce(
+    (text, [name, value]) => text.replace(`{${name}}`, value),
+    t(key)
+  );
+}
 
 function applyTranslations() {
   document.getElementById('header-title').textContent = t('settings');
@@ -55,6 +91,12 @@ function applyTranslations() {
   document.getElementById('cat-monitor').textContent = t('monitor');
   document.getElementById('lbl-language').textContent = t('language');
   document.getElementById('lang-hint').textContent = t('restartNote');
+  document.getElementById('lbl-updates').textContent = t('updates');
+  document.getElementById('lbl-current-version').textContent = t('currentVersion');
+  elCheckUpdate.textContent = t('checkUpdates');
+  elDownloadUpdate.textContent = t('download');
+  elInstallUpdate.textContent = t('restart');
+  elUpdateStatus.textContent = tf(updateStatusKey, updateStatusValues);
   document.getElementById('lbl-entries').textContent = t('monitorEntries');
   document.getElementById('btn-add').textContent = t('addEntry');
   document.getElementById('lbl-defresh').textContent = t('defaultRefresh');
@@ -75,6 +117,76 @@ function applyTranslations() {
   const eiOpts = document.querySelectorAll('#entry-interval option');
   if (eiOpts.length > 2) { eiOpts[2].textContent = t('refresh5min'); eiOpts[3].textContent = t('refresh10min'); eiOpts[4].textContent = t('refresh15min'); eiOpts[5].textContent = t('refresh30min'); eiOpts[6].textContent = t('refresh60min'); }
   renderEntries();
+}
+
+function setUpdateStatus(key, values) {
+  updateStatusKey = key;
+  updateStatusValues = values || {};
+  elUpdateStatus.textContent = tf(updateStatusKey, updateStatusValues);
+}
+
+function setUpdateButtons(state) {
+  elCheckUpdate.disabled = state === 'checking' || state === 'downloading';
+  elDownloadUpdate.classList.toggle('hidden', state !== 'available');
+  elDownloadUpdate.disabled = state === 'downloading';
+  elInstallUpdate.classList.toggle('hidden', state !== 'downloaded');
+}
+
+async function loadUpdateStatus() {
+  const status = await window.settingsAPI.getUpdateStatus();
+  elCurrentVersion.textContent = status.version || '--';
+  if (!status.isPackaged) {
+    setUpdateStatus('updateDevMode');
+  }
+}
+
+async function checkForUpdates() {
+  updateAvailable = false;
+  setUpdateButtons('checking');
+  setUpdateStatus('updateChecking');
+  await window.settingsAPI.checkForUpdates();
+}
+
+async function downloadUpdate() {
+  setUpdateButtons('downloading');
+  setUpdateStatus('updateDownloading', { percent: 0 });
+  await window.settingsAPI.downloadUpdate();
+}
+
+function bindUpdateEvents() {
+  updateCleanups.push(window.settingsAPI.onUpdateEvent('update-available', (data) => {
+    updateAvailable = true;
+    setUpdateButtons('available');
+    setUpdateStatus('updateAvailable', { version: data && data.version ? data.version : '--' });
+  }));
+
+  updateCleanups.push(window.settingsAPI.onUpdateEvent('update-not-available', () => {
+    updateAvailable = false;
+    setUpdateButtons('idle');
+    setUpdateStatus('updateNotAvailable');
+  }));
+
+  updateCleanups.push(window.settingsAPI.onUpdateEvent('update-progress', (data) => {
+    updateAvailable = true;
+    setUpdateButtons('downloading');
+    setUpdateStatus('updateDownloading', { percent: data && data.percent != null ? data.percent : 0 });
+  }));
+
+  updateCleanups.push(window.settingsAPI.onUpdateEvent('update-downloaded', () => {
+    updateAvailable = true;
+    setUpdateButtons('downloaded');
+    setUpdateStatus('updateDownloaded');
+  }));
+
+  updateCleanups.push(window.settingsAPI.onUpdateEvent('update-error', (data) => {
+    setUpdateButtons('idle');
+    setUpdateStatus('updateFailed', { message: data && data.message ? data.message : 'Unknown' });
+  }));
+
+  updateCleanups.push(window.settingsAPI.onUpdateEvent('update-dev-mode', () => {
+    setUpdateButtons('idle');
+    setUpdateStatus('updateDevMode');
+  }));
 }
 
 function updateKeyField() {
@@ -282,8 +394,17 @@ elLangSelect.addEventListener('change', async () => {
 // --- Add entry button ---
 document.getElementById('btn-add').addEventListener('click', openAddModal);
 
+// --- Updates ---
+elCheckUpdate.addEventListener('click', checkForUpdates);
+elDownloadUpdate.addEventListener('click', downloadUpdate);
+elInstallUpdate.addEventListener('click', () => window.settingsAPI.quitAndInstall());
+
 // --- Close button ---
 document.getElementById('btn-close').addEventListener('click', () => window.settingsAPI.closeWindow());
+
+window.addEventListener('beforeunload', () => {
+  updateCleanups.forEach(fn => fn());
+});
 
 // --- Init ---
 (async () => {
@@ -293,5 +414,7 @@ document.getElementById('btn-close').addEventListener('click', () => window.sett
   currentLang = await window.settingsAPI.getLanguage();
   elLangSelect.value = currentLang;
 
+  bindUpdateEvents();
   applyTranslations();
+  await loadUpdateStatus();
 })();

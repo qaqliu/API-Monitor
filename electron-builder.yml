@@ -13,12 +13,10 @@ files:
   - "!test-*"
   - "!REPO_OVERVIEW.md"
 
-# Enable this after publishing through GitHub Releases:
-# publish:
-#   - provider: github
-#     owner: <your-github-username>
-#     repo: <your-repo-name>
-publish: null
+publish:
+  - provider: github
+    owner: qaqliu
+    repo: API-Monitor
 
 win:
   target:
@@ -38,7 +36,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: false
   createStartMenuShortcut: true
-  deleteAppDataOnUninstall: true
+  deleteAppDataOnUninstall: false
   shortcutName: API Monitor
   menuCategory: API Monitor
   include: installer.nsh

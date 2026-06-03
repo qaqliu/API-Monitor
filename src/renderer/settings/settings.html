@@ -27,6 +27,21 @@
             </select>
             <p class="hint" id="lang-hint">Language change takes effect after restart.</p>
           </div>
+          <div class="section">
+            <label id="lbl-updates">Updates</label>
+            <div class="update-panel">
+              <div class="update-row">
+                <span id="lbl-current-version">Current Version</span>
+                <span id="current-version">--</span>
+              </div>
+              <div class="update-status" id="update-status">Ready to check for updates.</div>
+              <div class="update-actions">
+                <button id="btn-check-update">Check for Updates</button>
+                <button id="btn-download-update" class="hidden">Download</button>
+                <button id="btn-install-update" class="primary hidden">Restart</button>
+              </div>
+            </div>
+          </div>
         </div>
         <!-- Monitor panel -->
         <div class="panel" id="panel-monitor">

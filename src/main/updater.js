@@ -1,5 +1,5 @@
 const { autoUpdater } = require('electron-updater');
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, app } = require('electron');
 
 let widgetWindow = null;
 
@@ -11,31 +11,19 @@ function initUpdater(widgetWin) {
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('update-available', (info) => {
-    if (widgetWindow && !widgetWindow.isDestroyed()) {
-      widgetWindow.webContents.send('update-available', {
-        version: info.version,
-      });
-    }
+    broadcastUpdateEvent('update-available', { version: info.version });
   });
 
   autoUpdater.on('update-not-available', () => {
-    if (widgetWindow && !widgetWindow.isDestroyed()) {
-      widgetWindow.webContents.send('update-not-available');
-    }
+    broadcastUpdateEvent('update-not-available');
   });
 
   autoUpdater.on('download-progress', (progress) => {
-    if (widgetWindow && !widgetWindow.isDestroyed()) {
-      widgetWindow.webContents.send('update-progress', {
-        percent: Math.round(progress.percent),
-      });
-    }
+    broadcastUpdateEvent('update-progress', { percent: Math.round(progress.percent) });
   });
 
   autoUpdater.on('update-downloaded', () => {
-    if (widgetWindow && !widgetWindow.isDestroyed()) {
-      widgetWindow.webContents.send('update-downloaded');
-    }
+    broadcastUpdateEvent('update-downloaded');
   });
 
   autoUpdater.on('error', (err) => {
@@ -43,32 +31,59 @@ function initUpdater(widgetWin) {
     const msg = err ? err.message : '';
     if (msg.includes('Cannot find module') || msg.includes('ENOENT')) return;
 
-    if (widgetWindow && !widgetWindow.isDestroyed()) {
-      widgetWindow.webContents.send('update-error', {
-        message: msg || 'Unknown update error',
-      });
-    }
+    broadcastUpdateEvent('update-error', { message: msg || 'Unknown update error' });
   });
 }
 
-function checkForUpdates() {
-  const { app } = require('electron');
+function broadcastUpdateEvent(channel, data) {
+  BrowserWindow.getAllWindows()
+    .filter(win => !win.isDestroyed())
+    .forEach(win => win.webContents.send(channel, data));
+}
+
+function getUpdateStatus() {
+  return {
+    version: app.getVersion(),
+    isPackaged: app.isPackaged,
+  };
+}
+
+function checkForUpdates(options = {}) {
   // 只有在打包后的正式版本并且配置了更新源时才检查
-  if (!app.isPackaged) return;
+  if (!app.isPackaged) {
+    if (options.manual) {
+      broadcastUpdateEvent('update-dev-mode', {
+        message: 'Updates are only available in packaged builds.',
+      });
+    }
+    return Promise.resolve({ devMode: true });
+  }
 
   try {
-    autoUpdater.checkForUpdates().catch(() => {});
+    return autoUpdater.checkForUpdates().catch((err) => {
+      broadcastUpdateEvent('update-error', {
+        message: err && err.message ? err.message : 'Unknown update error',
+      });
+      return null;
+    });
   } catch {
     // 没有更新源配置，静默跳过
+    return Promise.resolve(null);
   }
 }
 
 function downloadUpdate() {
-  autoUpdater.downloadUpdate();
+  if (!app.isPackaged) {
+    broadcastUpdateEvent('update-dev-mode', {
+      message: 'Updates are only available in packaged builds.',
+    });
+    return Promise.resolve({ devMode: true });
+  }
+  return autoUpdater.downloadUpdate();
 }
 
 function quitAndInstall() {
   autoUpdater.quitAndInstall();
 }
 
-module.exports = { initUpdater, checkForUpdates, downloadUpdate, quitAndInstall };
+module.exports = { initUpdater, checkForUpdates, downloadUpdate, quitAndInstall, getUpdateStatus };

@@ -108,7 +108,6 @@ FunctionEnd
   Delete "$TEMP\close_explorer.vbs"
   Sleep 1000
   Delete "$DESKTOP\API Monitor.lnk"
-  RMDir /r "$PROFILE\AppData\Roaming\deepseek-api-monitor"
 !macroend
 
 ; Final cleanup — spawn async VBS to delete install dir after uninstaller exits (no reboot)
@@ -137,5 +136,4 @@ FunctionEnd
   FileWrite $0 "fso.DeleteFile scriptPath, True$\r$\n"
   FileClose $0
   ExecShell "open" "wscript.exe" "$TEMP\api_mon_cleanup.vbs" SW_HIDE
-  RMDir /r "$PROFILE\AppData\Roaming\deepseek-api-monitor"
 !macroend

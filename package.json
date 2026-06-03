@@ -7,7 +7,12 @@
     "start": "electron .",
     "dev": "electron .",
     "build": "electron-builder --win",
+    "publish:win": "electron-builder --win --publish always",
     "postbuild": "echo 'Output: dist/DeepSeek API Monitor x.x.x.exe'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qaqliu/API-Monitor.git"
   },
   "author": "",
   "license": "MIT",

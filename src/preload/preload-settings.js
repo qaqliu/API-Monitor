@@ -11,4 +11,13 @@ contextBridge.exposeInMainWorld('settingsAPI', {
   setLanguage: (lang) => ipcRenderer.invoke('set-language', lang),
   closeWindow: () => ipcRenderer.send('close-settings'),
   browseAuthFile: () => ipcRenderer.invoke('browse-auth-file'),
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+  onUpdateEvent: (channel, callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
 });
