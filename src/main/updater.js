@@ -3,35 +3,58 @@ const { BrowserWindow, app } = require('electron');
 
 let widgetWindow = null;
 
+const updateStatus = {
+  state: 'idle',
+  version: null,
+  percent: 0,
+  message: '',
+  files: [],
+};
+
 function initUpdater(widgetWin) {
   widgetWindow = widgetWin;
 
-  // Disable auto-download — let user decide
   autoUpdater.autoDownload = false;
-  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.autoInstallOnAppQuit = false;
 
   autoUpdater.on('update-available', (info) => {
+    updateStatus.state = 'available';
+    updateStatus.version = info.version;
+    updateStatus.percent = 0;
+    updateStatus.message = '';
     broadcastUpdateEvent('update-available', { version: info.version });
   });
 
   autoUpdater.on('update-not-available', () => {
+    updateStatus.state = 'idle';
+    updateStatus.version = null;
+    updateStatus.percent = 0;
+    updateStatus.message = '';
     broadcastUpdateEvent('update-not-available');
   });
 
   autoUpdater.on('download-progress', (progress) => {
-    broadcastUpdateEvent('update-progress', { percent: Math.round(progress.percent) });
+    const percent = Math.round(progress.percent);
+    updateStatus.state = 'downloading';
+    updateStatus.percent = percent;
+    broadcastUpdateEvent('update-progress', { percent });
   });
 
-  autoUpdater.on('update-downloaded', () => {
-    broadcastUpdateEvent('update-downloaded');
+  autoUpdater.on('update-downloaded', (info) => {
+    updateStatus.state = 'downloaded';
+    updateStatus.version = info && info.version ? info.version : updateStatus.version;
+    updateStatus.percent = 100;
+    updateStatus.message = '';
+    broadcastUpdateEvent('update-downloaded', { version: updateStatus.version });
   });
 
   autoUpdater.on('error', (err) => {
-    // 没有配置更新源时的报错不通知用户
     const msg = err ? err.message : '';
     if (msg.includes('Cannot find module') || msg.includes('ENOENT')) return;
 
-    broadcastUpdateEvent('update-error', { message: msg || 'Unknown update error' });
+    updateStatus.state = 'error';
+    updateStatus.message = msg || 'Unknown update error';
+    broadcastUpdateEvent('update-error', { message: updateStatus.message });
   });
 }
 
@@ -45,45 +68,59 @@ function getUpdateStatus() {
   return {
     version: app.getVersion(),
     isPackaged: app.isPackaged,
+    updateState: updateStatus.state,
+    updateVersion: updateStatus.version,
+    updatePercent: updateStatus.percent,
+    updateMessage: updateStatus.message,
   };
 }
 
 function checkForUpdates(options = {}) {
-  // 只有在打包后的正式版本并且配置了更新源时才检查
   if (!app.isPackaged) {
+    updateStatus.state = 'dev-mode';
+    updateStatus.message = 'Updates are only available in packaged builds.';
     if (options.manual) {
-      broadcastUpdateEvent('update-dev-mode', {
-        message: 'Updates are only available in packaged builds.',
-      });
+      broadcastUpdateEvent('update-dev-mode', { message: updateStatus.message });
     }
     return Promise.resolve({ devMode: true });
   }
 
   try {
+    updateStatus.state = 'checking';
+    updateStatus.message = '';
     return autoUpdater.checkForUpdates().catch((err) => {
-      broadcastUpdateEvent('update-error', {
-        message: err && err.message ? err.message : 'Unknown update error',
-      });
+      updateStatus.state = 'error';
+      updateStatus.message = err && err.message ? err.message : 'Unknown update error';
+      broadcastUpdateEvent('update-error', { message: updateStatus.message });
       return null;
     });
   } catch {
-    // 没有更新源配置，静默跳过
     return Promise.resolve(null);
   }
 }
 
 function downloadUpdate() {
   if (!app.isPackaged) {
-    broadcastUpdateEvent('update-dev-mode', {
-      message: 'Updates are only available in packaged builds.',
-    });
+    updateStatus.state = 'dev-mode';
+    updateStatus.message = 'Updates are only available in packaged builds.';
+    broadcastUpdateEvent('update-dev-mode', { message: updateStatus.message });
     return Promise.resolve({ devMode: true });
   }
-  return autoUpdater.downloadUpdate();
+
+  updateStatus.state = 'downloading';
+  updateStatus.percent = 0;
+  return autoUpdater.downloadUpdate().then((files) => {
+    updateStatus.files = Array.isArray(files) ? files : [];
+    return files;
+  });
 }
 
 function quitAndInstall() {
-  autoUpdater.quitAndInstall();
+  app.isQuitting = true;
+  BrowserWindow.getAllWindows()
+    .filter(win => !win.isDestroyed())
+    .forEach(win => win.removeAllListeners('close'));
+  setImmediate(() => autoUpdater.quitAndInstall(false, true));
 }
 
 module.exports = { initUpdater, checkForUpdates, downloadUpdate, quitAndInstall, getUpdateStatus };

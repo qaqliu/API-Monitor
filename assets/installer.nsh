@@ -3,26 +3,125 @@
 Var CreateDesktopShortcutCheckbox
 Var CreateDesktopShortcutChoice
 Var SkipVerifyInstDir
+Var PreviousInstallDir
 
 ; Set default install directory to avoid double-nesting
+!ifndef BUILD_UNINSTALLER
 !macro customInit
   StrCpy $CreateDesktopShortcutChoice "1"
   StrCpy $SkipVerifyInstDir "0"
+  StrCpy $PreviousInstallDir ""
   ${If} ${isUpdated}
     StrCpy $SkipVerifyInstDir "1"
   ${EndIf}
 
-  ReadRegStr $0 HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
-  ${If} $0 == ""
-    ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+  Push "HKLM"
+  Call ReadPreviousInstallDir
+  Pop $PreviousInstallDir
+  ${If} $PreviousInstallDir == ""
+    Push "HKCU"
+    Call ReadPreviousInstallDir
+    Pop $PreviousInstallDir
   ${EndIf}
 
-  ${If} $0 != ""
-    StrCpy $INSTDIR "$0"
+  ${If} $PreviousInstallDir != ""
+    StrCpy $INSTDIR "$PreviousInstallDir"
   ${ElseIfNot} ${isUpdated}
     StrCpy $INSTDIR "$PROGRAMFILES64\API Monitor"
   ${EndIf}
 !macroend
+
+Function ReadPreviousInstallDir
+  Exch $9
+
+  StrCpy $0 ""
+
+  ${If} $9 == "HKLM"
+    ReadRegStr $0 HKLM "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${If} $0 == ""
+      ReadRegStr $1 HKLM "${UNINSTALL_REGISTRY_KEY}" UninstallString
+      Call ResolveDirFromRegistryPath
+    ${EndIf}
+    ${If} $0 == ""
+      ReadRegStr $1 HKLM "${UNINSTALL_REGISTRY_KEY}" QuietUninstallString
+      Call ResolveDirFromRegistryPath
+    ${EndIf}
+    ${If} $0 == ""
+      ReadRegStr $1 HKLM "${UNINSTALL_REGISTRY_KEY}" DisplayIcon
+      Call ResolveDirFromRegistryPath
+    ${EndIf}
+  ${Else}
+    ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" InstallLocation
+    ${If} $0 == ""
+      ReadRegStr $1 HKCU "${UNINSTALL_REGISTRY_KEY}" UninstallString
+      Call ResolveDirFromRegistryPath
+    ${EndIf}
+    ${If} $0 == ""
+      ReadRegStr $1 HKCU "${UNINSTALL_REGISTRY_KEY}" QuietUninstallString
+      Call ResolveDirFromRegistryPath
+    ${EndIf}
+    ${If} $0 == ""
+      ReadRegStr $1 HKCU "${UNINSTALL_REGISTRY_KEY}" DisplayIcon
+      Call ResolveDirFromRegistryPath
+    ${EndIf}
+  ${EndIf}
+
+  Exch $0
+FunctionEnd
+
+Function ResolveDirFromRegistryPath
+  ${If} $1 == ""
+    Return
+  ${EndIf}
+
+  StrCpy $2 "$1"
+  StrCpy $3 $2 1 0
+  ${If} $3 == '"'
+    StrCpy $2 ""
+    StrCpy $4 1
+
+    read_quoted_path:
+      StrCpy $3 $1 1 $4
+      StrCmp $3 "" quoted_done
+      StrCmp $3 '"' quoted_done
+      StrCpy $2 "$2$3"
+      IntOp $4 $4 + 1
+      Goto read_quoted_path
+
+    quoted_done:
+  ${EndIf}
+
+  Push $2
+  Call GetPathParent
+  Pop $0
+FunctionEnd
+
+Function GetPathParent
+  Exch $2
+  Push $3
+  Push $4
+
+  StrLen $3 $2
+
+  find_parent_slash:
+    IntOp $3 $3 - 1
+    IntCmp $3 -1 parent_not_found
+    StrCpy $4 $2 1 $3
+    StrCmp $4 "\" parent_found find_parent_slash
+
+  parent_found:
+    StrCpy $2 $2 $3
+    Goto parent_done
+
+  parent_not_found:
+    StrCpy $2 ""
+
+  parent_done:
+    Pop $4
+    Pop $3
+    Exch $2
+FunctionEnd
+!endif
 
 !macro customPageAfterChangeDir
   PageEx custom

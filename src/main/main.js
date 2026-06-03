@@ -51,7 +51,7 @@ function createWidgetWindow() {
   });
 
   widgetWindow.on('close', (event) => {
-    if (!isQuitting) {
+    if (!isQuitting && !app.isQuitting) {
       event.preventDefault();
       widgetWindow.hide();
     }
@@ -108,6 +108,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  app.isQuitting = true;
   stopAutoRefresh();
 });
 

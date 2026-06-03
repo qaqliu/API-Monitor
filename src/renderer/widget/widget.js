@@ -414,7 +414,12 @@ updateCleanups.push(window.api.onUpdateEvent('update-available', (data) => {
     elUpdateText.textContent = 'Downloading...';
     elUpdateAction.textContent = '...';
     elUpdateAction.onclick = null;
-    window.api.downloadUpdate();
+    window.api.downloadUpdate().catch((err) => {
+      showUpdateBanner(`Update failed: ${err.message || 'Unknown'}`, 'Retry', () => {
+        hideUpdateBanner();
+        window.api.checkForUpdates();
+      });
+    });
   });
 }));
 
@@ -426,7 +431,13 @@ updateCleanups.push(window.api.onUpdateEvent('update-progress', (data) => {
 
 updateCleanups.push(window.api.onUpdateEvent('update-downloaded', () => {
   showUpdateBanner('Update ready. Restart now?', 'Restart', () => {
-    window.api.quitAndInstall();
+    elUpdateAction.textContent = '...';
+    elUpdateAction.onclick = null;
+    window.api.quitAndInstall().catch((err) => {
+      showUpdateBanner(`Install failed: ${err.message || 'Unknown'}`, 'Retry', () => {
+        window.api.quitAndInstall();
+      });
+    });
   });
 }));
 

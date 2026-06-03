@@ -136,7 +136,29 @@ async function loadUpdateStatus() {
   const status = await window.settingsAPI.getUpdateStatus();
   elCurrentVersion.textContent = status.version || '--';
   if (!status.isPackaged) {
+    setUpdateButtons('idle');
     setUpdateStatus('updateDevMode');
+    return;
+  }
+
+  if (status.updateState === 'available') {
+    setUpdateButtons('available');
+    setUpdateStatus('updateAvailable', { version: status.updateVersion || '--' });
+  } else if (status.updateState === 'downloading') {
+    setUpdateButtons('downloading');
+    setUpdateStatus('updateDownloading', { percent: status.updatePercent || 0 });
+  } else if (status.updateState === 'downloaded') {
+    setUpdateButtons('downloaded');
+    setUpdateStatus('updateDownloaded');
+  } else if (status.updateState === 'error') {
+    setUpdateButtons('idle');
+    setUpdateStatus('updateFailed', { message: status.updateMessage || 'Unknown' });
+  } else if (status.updateState === 'checking') {
+    setUpdateButtons('checking');
+    setUpdateStatus('updateChecking');
+  } else {
+    setUpdateButtons('idle');
+    setUpdateStatus('updateReady');
   }
 }
 
