@@ -17,6 +17,7 @@ publish:
   - provider: github
     owner: qaqliu
     repo: API-Monitor
+    releaseType: release
 
 win:
   target:
