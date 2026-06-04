@@ -131,7 +131,7 @@ body {
 /* Main widget */
 #widget {
   width: 260px;
-  height: 180px;
+  height: 210px;
   background: rgba(30, 30, 40, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
@@ -436,11 +436,33 @@ body {
 #balance-view {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   flex: 1;
   min-height: 0;
   justify-content: center;
   overflow: hidden;
+}
+
+.deepseek-dashboard-btn {
+  align-self: stretch;
+  height: 26px;
+  background: rgba(77, 107, 254, 0.14);
+  border: 1px solid rgba(77, 107, 254, 0.32);
+  color: rgba(170, 185, 255, 0.95);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+}
+
+.deepseek-dashboard-btn:hover {
+  background: rgba(77, 107, 254, 0.24);
+}
+
+.deepseek-dashboard-btn.hidden {
+  display: none;
 }
 
 #codex-view {

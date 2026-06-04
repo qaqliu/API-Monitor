@@ -18,6 +18,7 @@ const elEmptyView = document.getElementById('empty-view');
 const elDropdown = document.getElementById('entry-dropdown');
 const elDropdownSearch = document.getElementById('dropdown-search-input');
 const elDropdownList = document.getElementById('dropdown-list');
+const btnDeepSeekDashboard = document.getElementById('btn-deepseek-dashboard');
 
 // Codex DOM refs
 const elPct5h = document.getElementById('val-5h-pct');
@@ -46,7 +47,7 @@ const T = {
     fiveHourUsage: '5h Usage', sevenDayUsage: '7d Usage', credits: 'Credits',
     remaining: 'remaining',
     noEntries: 'No entries configured.', openSettings: 'Open Settings',
-    refresh: 'Refresh', search: 'Search...', noMatches: 'No matches',
+    refresh: 'Refresh', dashboard: 'Dashboard', search: 'Search...', noMatches: 'No matches',
     addFirst: 'Add your first entry',
   },
   'zh-CN': {
@@ -54,7 +55,7 @@ const T = {
     fiveHourUsage: '5小时用量', sevenDayUsage: '7天用量', credits: '积分额度',
     remaining: '后重置',
     noEntries: '暂无监控条目。', openSettings: '打开设置',
-    refresh: '刷新', search: '搜索...', noMatches: '无匹配结果',
+    refresh: '刷新', dashboard: '官网仪表盘', search: '搜索...', noMatches: '无匹配结果',
     addFirst: '添加第一个条目',
   },
 };
@@ -119,6 +120,8 @@ function applyTranslations() {
 
   document.getElementById('empty-msg').textContent = t('noEntries');
   document.getElementById('btn-open-settings').textContent = t('openSettings');
+  btnDeepSeekDashboard.textContent = t('dashboard');
+  btnDeepSeekDashboard.classList.toggle('hidden', !entry || entry.provider !== 'deepseek');
   btnRefresh.innerHTML = '&#x21bb; ' + t('refresh');
   elDropdownSearch.placeholder = t('search');
 }
@@ -398,6 +401,7 @@ elTitle.addEventListener('click', (e) => {
 });
 
 btnRefresh.addEventListener('click', refreshBalance);
+btnDeepSeekDashboard.addEventListener('click', () => window.api.openDeepSeekDashboard());
 btnSettings.addEventListener('click', () => window.api.openSettings());
 btnMinimize.addEventListener('click', () => window.api.minimizeWindow());
 document.getElementById('btn-exit').addEventListener('click', () => window.api.quitApp());

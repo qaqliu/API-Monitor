@@ -1,6 +1,7 @@
 const DEFAULT_RETRIES = 2;
 const DEFAULT_TIMEOUT_MS = 10000;
 const DEFAULT_RETRY_DELAY_MS = 800;
+const { net } = require('electron');
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -21,7 +22,7 @@ async function fetchJsonWithRetry(url, options = {}, retryOptions = {}) {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, {
+      const response = await getFetchImpl()(url, {
         ...options,
         signal: controller.signal,
       });
@@ -97,6 +98,13 @@ function isRetryableError(err) {
     err.code === 'API_RETRYABLE' ||
     err.code === 'PARSE_RETRYABLE'
   );
+}
+
+function getFetchImpl() {
+  if (net && typeof net.fetch === 'function') {
+    return net.fetch.bind(net);
+  }
+  return fetch;
 }
 
 module.exports = { fetchJsonWithRetry };

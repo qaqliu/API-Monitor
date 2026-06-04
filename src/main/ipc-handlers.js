@@ -1,4 +1,4 @@
-const { ipcMain, app } = require('electron');
+const { ipcMain, app, shell } = require('electron');
 const { fetchBalanceByEntry } = require('../services/providers');
 const {
   getEntries, getEntry, addEntry, updateEntry, deleteEntry,
@@ -143,7 +143,7 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
 
   ipcMain.on('resize-widget', (_event, provider) => {
     if (!widgetWindow || widgetWindow.isDestroyed()) return;
-    const h = provider === 'codex' ? 390 : 340;
+    const h = provider === 'codex' ? 390 : 370;
     const [x, y] = widgetWindow.getPosition();
     const newY = Math.max(0, y + (widgetWindow.getSize()[1] - h));
     widgetWindow.setBounds({ x, y: newY, width: 260, height: h });
@@ -155,6 +155,10 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
 
   ipcMain.on('open-settings', () => {
     if (createSettingsWindowFn) createSettingsWindowFn();
+  });
+
+  ipcMain.on('open-deepseek-dashboard', () => {
+    shell.openExternal('https://platform.deepseek.com/usage');
   });
 
   ipcMain.on('close-settings', () => {
