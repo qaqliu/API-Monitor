@@ -13,6 +13,7 @@ const elDeepSeekSimpleField = document.getElementById('deepseek-simple-field');
 const elToggleKey = document.getElementById('btn-toggle-key');
 const elBrowseKey = document.getElementById('btn-browse-key');
 const elLangSelect = document.getElementById('language-select');
+const elEntryListEnabled = document.getElementById('entry-list-enabled');
 const elCurrentVersion = document.getElementById('current-version');
 const elUpdateStatus = document.getElementById('update-status');
 const elCheckUpdate = document.getElementById('btn-check-update');
@@ -124,6 +125,10 @@ function applyTranslations() {
   document.getElementById('cat-providers').textContent = t('providers');
   document.getElementById('lbl-language').textContent = t('language');
   document.getElementById('lang-hint').textContent = t('restartNote');
+  document.getElementById('lbl-entry-list-enabled').textContent = currentLang === 'zh-CN' ? '启用条目切换列表' : 'Enable entry selector list';
+  document.getElementById('entry-list-hint').textContent = currentLang === 'zh-CN'
+    ? '关闭后悬浮窗恢复为纯本体大小，Logo 不再作为可点击入口。'
+    : 'When disabled, the widget uses the compact original window size and the logo is not clickable.';
   document.getElementById('lbl-updates').textContent = t('updates');
   document.getElementById('lbl-current-version').textContent = t('currentVersion');
   elCheckUpdate.textContent = t('checkUpdates');
@@ -515,9 +520,12 @@ function normalizeMonitorBlock(block) {
 }
 
 function calculateProviderWidgetHeight(blocks) {
-  const count = Math.max(1, Array.isArray(blocks) ? blocks.length : 0);
-  const widgetHeight = Math.min(300, Math.max(108, 76 + count * 34));
-  return 140 + widgetHeight + 20;
+  const items = Array.isArray(blocks) ? blocks : [];
+  const blockHeight = items.length === 0
+    ? 20
+    : items.reduce((sum, block) => sum + (block.type === 'dashboard' ? 26 : 20), 0) + Math.max(0, items.length - 1) * 7;
+  const widgetCardHeight = Math.min(340, Math.max(125, 105 + blockHeight));
+  return widgetCardHeight + 160;
 }
 
 function syncProviderWidgetHeight() {
@@ -857,6 +865,9 @@ elInstallUpdate.addEventListener('click', () => window.settingsAPI.quitAndInstal
 elEntryName.addEventListener('keydown', e => { if (e.key === 'Enter') saveModal(); });
 elEntryKey.addEventListener('keydown', e => { if (e.key === 'Enter') saveModal(); });
 elInterval.addEventListener('change', async () => window.settingsAPI.setRefreshInterval(Number(elInterval.value)));
+elEntryListEnabled.addEventListener('change', async () => {
+  await window.settingsAPI.setEntryListEnabled(elEntryListEnabled.checked);
+});
 elLangSelect.addEventListener('change', async () => {
   currentLang = elLangSelect.value;
   await window.settingsAPI.setLanguage(currentLang);
@@ -866,6 +877,7 @@ window.addEventListener('beforeunload', () => updateCleanups.forEach(fn => fn())
 
 (async () => {
   elInterval.value = String(await window.settingsAPI.getRefreshInterval());
+  elEntryListEnabled.checked = await window.settingsAPI.getEntryListEnabled();
   currentLang = await window.settingsAPI.getLanguage();
   elLangSelect.value = currentLang;
   await loadProviders();

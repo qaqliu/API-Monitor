@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('api', {
   setCurrentIndex: (index) => ipcRenderer.invoke('set-current-index', index),
   getRefreshInterval: () => ipcRenderer.invoke('get-refresh-interval'),
   getLanguage: () => ipcRenderer.invoke('get-language'),
+  getEntryListEnabled: () => ipcRenderer.invoke('get-entry-list-enabled'),
   minimizeWindow: () => ipcRenderer.send('minimize-widget'),
   resizeWidget: (provider) => ipcRenderer.send('resize-widget', provider),
   openSettings: () => ipcRenderer.send('open-settings'),
@@ -35,6 +36,12 @@ contextBridge.exposeInMainWorld('api', {
     const handler = (_event, lang) => callback(lang);
     ipcRenderer.on('language-changed', handler);
     return () => ipcRenderer.removeListener('language-changed', handler);
+  },
+
+  onEntryListEnabledChanged: (callback) => {
+    const handler = (_event, enabled) => callback(enabled);
+    ipcRenderer.on('entry-list-enabled-changed', handler);
+    return () => ipcRenderer.removeListener('entry-list-enabled-changed', handler);
   },
 
   onUpdateEvent: (channel, callback) => {

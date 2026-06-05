@@ -289,6 +289,15 @@ body {
   background: rgba(255, 255, 255, 0.08);
 }
 
+#widget.entry-list-disabled .header .logo {
+  -webkit-app-region: drag;
+  cursor: move;
+}
+
+#widget.entry-list-disabled .header .logo:hover {
+  background: transparent;
+}
+
 .header .logo svg {
   width: 16px; height: 16px;
   display: block;
@@ -364,6 +373,7 @@ body {
 }
 
 .balance-row {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;

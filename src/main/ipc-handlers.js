@@ -6,6 +6,7 @@ const {
   getCurrentIndex, setCurrentIndex,
   getRefreshInterval, setRefreshInterval,
   getLanguage, setLanguage,
+  getEntryListEnabled, setEntryListEnabled,
   getCustomProviders, addCustomProvider, updateCustomProvider, deleteCustomProvider,
 } = require('../services/store');
 const { restartAutoRefresh } = require('./auto-refresh');
@@ -140,6 +141,10 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
 
   ipcMain.handle('set-current-index', (_event, index) => {
     const entries = getEntries();
+    if (entries.length === 0) {
+      setCurrentIndex(0);
+      return 0;
+    }
     const clamped = Math.max(0, Math.min(index, entries.length - 1));
     setCurrentIndex(clamped);
     restartAutoRefresh(widgetWindow, getEntryRefreshMs());
@@ -173,6 +178,18 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
     return { success: true };
   });
 
+  // --- Entry selector list ---
+  ipcMain.handle('get-entry-list-enabled', () => getEntryListEnabled());
+
+  ipcMain.handle('set-entry-list-enabled', (_event, enabled) => {
+    const value = Boolean(enabled);
+    setEntryListEnabled(value);
+    if (widgetWindow && !widgetWindow.isDestroyed()) {
+      widgetWindow.webContents.send('entry-list-enabled-changed', value);
+    }
+    return { success: true, enabled: value };
+  });
+
   // --- Widget window actions ---
   ipcMain.on('minimize-widget', () => {
     if (widgetWindow && !widgetWindow.isDestroyed()) widgetWindow.hide();
@@ -182,21 +199,26 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
     if (!widgetWindow || widgetWindow.isDestroyed()) return;
     const provider = typeof requested === 'object' && requested ? requested.provider : requested;
     const sizes = {
-      codex: { width: 260, height: 390 },
-      'deepseek-compact': { width: 154, height: 250 },
-      deepseek: { width: 260, height: 372 },
-      custom: { width: 260, height: 390 },
+      codex: { width: 260, height: 230 },
+      'deepseek-compact': { width: 154, height: 90 },
+      deepseek: { width: 260, height: 212 },
+      custom: { width: 260, height: 212 },
     };
     const size = { ...(sizes[provider] || sizes.deepseek) };
-    if (typeof requested === 'object' && requested && requested.height) {
-      size.height = requested.height;
+    const listEnabled = typeof requested === 'object' && requested && 'entryListEnabled' in requested
+      ? Boolean(requested.entryListEnabled)
+      : getEntryListEnabled();
+    const reserve = listEnabled ? 160 : 0;
+    if (typeof requested === 'object' && requested && requested.cardHeight) {
+      size.height = requested.cardHeight;
     }
+    size.height += reserve;
     const [x, y] = widgetWindow.getPosition();
     const [oldWidth, oldHeight] = widgetWindow.getSize();
     const display = screen.getDisplayMatching({ x, y, width: oldWidth, height: oldHeight });
     const area = display.workArea;
     const nextX = clamp(x, area.x, area.x + area.width - size.width);
-    const nextY = clamp(y + oldHeight - size.height, area.y, area.y + area.height - size.height);
+    const nextY = clamp(y + oldHeight - size.height, area.y - reserve, area.y + area.height - size.height);
     widgetWindow.setBounds({ x: nextX, y: nextY, width: size.width, height: size.height });
   });
 

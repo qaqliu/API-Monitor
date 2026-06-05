@@ -36,10 +36,12 @@ const elErrorCodex = document.getElementById('error-message-codex');
 let entries = [];
 let currentIndex = 0;
 let currentLang = 'zh-CN';
+let entryListEnabled = true;
 let dropdownOpen = false;
 let refreshCleanup = null;
 let entriesChangedCleanup = null;
 let langChangeCleanup = null;
+let entryListEnabledCleanup = null;
 let customTemplateKey = '';
 
 // Light i18n
@@ -115,15 +117,17 @@ function applyTranslations() {
   elWidget.classList.toggle('widget-codex', Boolean(isCodex));
   elWidget.classList.toggle('widget-compact', Boolean(isDeepSeekCompact));
   elWidget.classList.toggle('widget-custom', Boolean(isCustom));
+  elWidget.classList.toggle('entry-list-disabled', !entryListEnabled);
   elDropdown.classList.toggle('dropdown-compact', Boolean(isDeepSeekCompact));
-  if (isCodex) window.api.resizeWidget('codex');
-  else if (isDeepSeekCompact) window.api.resizeWidget('deepseek-compact');
+  if (!entryListEnabled) closeDropdown();
+  if (isCodex) resizeWidgetForCurrentEntry('codex', 230);
+  else if (isDeepSeekCompact) resizeWidgetForCurrentEntry('deepseek-compact', 90);
   else if (isCustom) {
     elWidget.style.setProperty('--custom-widget-height', `${entry.providerWidgetCardHeight || 212}px`);
     renderCustomTemplate(entry);
-    window.api.resizeWidget({ provider: 'custom', height: entry.providerWidgetHeight || 372 });
+    resizeWidgetForCurrentEntry('custom', entry.providerWidgetCardHeight || 212);
   }
-  else window.api.resizeWidget('deepseek');
+  else resizeWidgetForCurrentEntry('deepseek', 212);
 
   // Toggle views
   elBalanceView.style.display = isCodex ? 'none' : '';
@@ -143,9 +147,20 @@ function applyTranslations() {
   document.getElementById('btn-open-settings').textContent = t('openSettings');
   btnDeepSeekDashboard.textContent = t('dashboard');
   btnDeepSeekDashboard.classList.toggle('hidden', !entry || entry.provider !== 'deepseek' || isDeepSeekCompact);
+  elTotal.parentElement.title = isDeepSeekCompact
+    ? (currentLang === 'zh-CN' ? '双击打开官网仪表盘' : 'Double-click to open usage dashboard')
+    : '';
   btnRefresh.innerHTML = '&#x21bb; ' + t('refresh');
   elDropdownSearch.placeholder = t('search');
   applyDeepSeekSimpleState();
+}
+
+function resizeWidgetForCurrentEntry(provider, cardHeight) {
+  window.api.resizeWidget({
+    provider,
+    cardHeight,
+    entryListEnabled,
+  });
 }
 
 function showEmptyState() {
@@ -401,6 +416,7 @@ async function switchEntryDelta(delta) {
 
 // --- Dropdown ---
 function openDropdown() {
+  if (!entryListEnabled) return;
   if (dropdownOpen) return;
   dropdownOpen = true;
   elDropdown.classList.remove('hidden');
@@ -483,6 +499,7 @@ elNext.addEventListener('click', () => switchEntryDelta(1));
 
 function toggleDropdown(event) {
   event.stopPropagation();
+  if (!entryListEnabled) return;
   if (!currentEntry()) return;
   if (dropdownOpen) {
     closeDropdown();
@@ -580,16 +597,23 @@ langChangeCleanup = window.api.onLanguageChanged((lang) => {
   applyTranslations();
 });
 
+entryListEnabledCleanup = window.api.onEntryListEnabledChanged((enabled) => {
+  entryListEnabled = Boolean(enabled);
+  applyTranslations();
+});
+
 window.addEventListener('beforeunload', () => {
   if (refreshCleanup) refreshCleanup();
   if (entriesChangedCleanup) entriesChangedCleanup();
   if (langChangeCleanup) langChangeCleanup();
+  if (entryListEnabledCleanup) entryListEnabledCleanup();
   updateCleanups.forEach(fn => fn());
 });
 
 // Init
 (async () => {
   currentLang = await window.api.getLanguage();
+  entryListEnabled = await window.api.getEntryListEnabled();
   applyTranslations();
   await loadEntries();
 })();

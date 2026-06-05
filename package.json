@@ -1,6 +1,6 @@
 {
   "name": "api-monitor",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "API 余额监控桌面组件",
   "main": "src/main/main.js",
   "scripts": {

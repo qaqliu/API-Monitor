@@ -47,6 +47,7 @@ function initStore() {
       currentIndex: { type: 'number', default: 0 },
       refreshInterval: { type: 'number', default: 5, minimum: 1, maximum: 60 },
       language: { type: 'string', default: 'zh-CN' },
+      entryListEnabled: { type: 'boolean', default: true },
       windowPosition: { type: ['object', 'null'], default: null },
     },
   });
@@ -106,20 +107,41 @@ function setRefreshInterval(minutes) { store.set('refreshInterval', Number(minut
 function getLanguage() { return store.get('language', 'zh-CN'); }
 function setLanguage(lang) { store.set('language', lang); }
 
+// --- Entry List ---
+function getEntryListEnabled() { return store.get('entryListEnabled', true); }
+function setEntryListEnabled(enabled) { store.set('entryListEnabled', Boolean(enabled)); }
+
 // --- Window Position ---
 function getWindowPosition() { return store.get('windowPosition', null); }
 function setWindowPosition(x, y) { store.set('windowPosition', { x, y }); }
 
 // --- Custom Providers ---
+const WIDGET_TOP_RESERVE = 160;
+const CUSTOM_CARD_MIN_HEIGHT = 125;
+const CUSTOM_CARD_MAX_HEIGHT = 340;
+const CUSTOM_CARD_BASE_HEIGHT = 105;
+const CUSTOM_BLOCK_GAP = 7;
+const CUSTOM_BALANCE_ROW_HEIGHT = 20;
+const CUSTOM_DASHBOARD_ROW_HEIGHT = 26;
+
+function getCustomMonitorBlockHeight(block) {
+  return block && block.type === 'dashboard' ? CUSTOM_DASHBOARD_ROW_HEIGHT : CUSTOM_BALANCE_ROW_HEIGHT;
+}
+
+function calculateCustomProviderContentHeight(monitors) {
+  const blocks = Array.isArray(monitors) ? monitors : [];
+  if (blocks.length === 0) return CUSTOM_BALANCE_ROW_HEIGHT;
+  const blockHeight = blocks.reduce((sum, block) => sum + getCustomMonitorBlockHeight(block), 0);
+  return blockHeight + Math.max(0, blocks.length - 1) * CUSTOM_BLOCK_GAP;
+}
+
 function calculateCustomProviderWidgetHeight(monitors) {
-  const count = Math.max(1, Array.isArray(monitors) ? monitors.length : 0);
-  const widgetHeight = Math.min(300, Math.max(108, 76 + count * 34));
-  return 140 + widgetHeight + 20;
+  return calculateCustomProviderWidgetCardHeight(monitors) + WIDGET_TOP_RESERVE;
 }
 
 function calculateCustomProviderWidgetCardHeight(monitors) {
-  const count = Math.max(1, Array.isArray(monitors) ? monitors.length : 0);
-  return Math.min(300, Math.max(108, 76 + count * 34));
+  const contentHeight = calculateCustomProviderContentHeight(monitors);
+  return Math.min(CUSTOM_CARD_MAX_HEIGHT, Math.max(CUSTOM_CARD_MIN_HEIGHT, CUSTOM_CARD_BASE_HEIGHT + contentHeight));
 }
 
 function escapeHtml(value) {
@@ -157,9 +179,9 @@ function normalizeCustomProvider(provider) {
   return {
     ...provider,
     monitors,
-    widgetHeight: Number.isFinite(provider.widgetHeight) ? provider.widgetHeight : ui.widgetHeight,
-    widgetCardHeight: Number.isFinite(provider.widgetCardHeight) ? provider.widgetCardHeight : ui.widgetCardHeight,
-    widgetHtml: provider.widgetHtml || ui.widgetHtml,
+    widgetHeight: ui.widgetHeight,
+    widgetCardHeight: ui.widgetCardHeight,
+    widgetHtml: ui.widgetHtml,
   };
 }
 
@@ -228,6 +250,7 @@ module.exports = {
   getCurrentIndex, setCurrentIndex,
   getRefreshInterval, setRefreshInterval,
   getLanguage, setLanguage,
+  getEntryListEnabled, setEntryListEnabled,
   getWindowPosition, setWindowPosition,
   calculateCustomProviderWidgetHeight, calculateCustomProviderWidgetCardHeight, buildCustomProviderWidgetHtml,
   getCustomProviders, getCustomProvider, addCustomProvider, updateCustomProvider, deleteCustomProvider,

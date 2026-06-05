@@ -1,6 +1,6 @@
 const { app, BrowserWindow, screen } = require('electron');
 const path = require('path');
-const { initStore, getWindowPosition, setWindowPosition } = require('../services/store');
+const { initStore, getWindowPosition, setWindowPosition, getEntryListEnabled } = require('../services/store');
 const { createTray, updateTrayTooltip } = require('./tray');
 const { registerIpcHandlers, setSettingsWindow } = require('./ipc-handlers');
 const { initAutoRefresh, stopAutoRefresh } = require('./auto-refresh');
@@ -18,12 +18,13 @@ const appIconPath = path.join(__dirname, '..', '..', 'assets', 'icon.ico');
 
 function createWidgetWindow() {
   const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
+  const initialHeight = getEntryListEnabled() ? 372 : 212;
 
   widgetWindow = new BrowserWindow({
     width: 260,
-    height: 340,
+    height: initialHeight,
     x: screenWidth - 280,
-    y: screenHeight - 360,
+    y: screenHeight - initialHeight - 20,
     frame: false,
     transparent: true,
     alwaysOnTop: 'screen-saver',
@@ -60,6 +61,8 @@ function createWidgetWindow() {
 
 function createSettingsWindow() {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
+    if (settingsWindow.isMinimized()) settingsWindow.restore();
+    if (!settingsWindow.isVisible()) settingsWindow.show();
     settingsWindow.focus();
     return;
   }

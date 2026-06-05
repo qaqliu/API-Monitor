@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('settingsAPI', {
   setRefreshInterval: (minutes) => ipcRenderer.invoke('set-refresh-interval', minutes),
   getLanguage: () => ipcRenderer.invoke('get-language'),
   setLanguage: (lang) => ipcRenderer.invoke('set-language', lang),
+  getEntryListEnabled: () => ipcRenderer.invoke('get-entry-list-enabled'),
+  setEntryListEnabled: (enabled) => ipcRenderer.invoke('set-entry-list-enabled', enabled),
   closeWindow: () => ipcRenderer.send('close-settings'),
   browseAuthFile: () => ipcRenderer.invoke('browse-auth-file'),
   browseLogoFile: () => ipcRenderer.invoke('browse-logo-file'),
