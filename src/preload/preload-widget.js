@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('api', {
   resizeWidget: (provider) => ipcRenderer.send('resize-widget', provider),
   openSettings: () => ipcRenderer.send('open-settings'),
   openDeepSeekDashboard: () => ipcRenderer.send('open-deepseek-dashboard'),
+  openExternalUrl: (url) => ipcRenderer.send('open-external-url', url),
   quitApp: () => ipcRenderer.send('quit-app'),
 
   // Auto-update

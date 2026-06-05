@@ -106,6 +106,9 @@ function updateTrayTooltip(balance, entry) {
       tray.setToolTip(
         `${name}\n5h: ${pPct != null ? pPct + '%' : '--'}  |  7d: ${sPct != null ? sPct + '%' : '--'}`
       );
+    } else if (balance.provider === 'custom') {
+      const first = (balance.customItems || [])[0];
+      tray.setToolTip(`${name}\n${first ? `${first.label}: ${Number(first.value || 0).toFixed(2)}` : 'Custom provider'}`);
     } else {
       tray.setToolTip(
         `${name}\n\xA5${balance.total_balance.toFixed(2)} (Granted: \xA5${balance.granted_balance.toFixed(2)})`

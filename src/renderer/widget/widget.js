@@ -19,6 +19,7 @@ const elDropdown = document.getElementById('entry-dropdown');
 const elDropdownSearch = document.getElementById('dropdown-search-input');
 const elDropdownList = document.getElementById('dropdown-list');
 const btnDeepSeekDashboard = document.getElementById('btn-deepseek-dashboard');
+const elCustomBlocks = document.getElementById('custom-blocks');
 
 // Codex DOM refs
 const elPct5h = document.getElementById('val-5h-pct');
@@ -39,6 +40,7 @@ let dropdownOpen = false;
 let refreshCleanup = null;
 let entriesChangedCleanup = null;
 let langChangeCleanup = null;
+let customTemplateKey = '';
 
 // Light i18n
 const T = {
@@ -67,7 +69,18 @@ const PROVIDER_LOGOS = {
   codex: `<svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" aria-label="ChatGPT"><path fill="#10A37F" d="m297.06 130.97c7.26-21.79 4.76-45.66-6.85-65.48-17.46-30.4-52.56-46.04-86.84-38.68-15.25-17.18-37.16-26.95-60.13-26.81-35.04-.08-66.13 22.48-76.91 55.82-22.51 4.61-41.94 18.7-53.31 38.67-17.59 30.32-13.58 68.54 9.92 94.54-7.26 21.79-4.76 45.66 6.85 65.48 17.46 30.4 52.56 46.04 86.84 38.68 15.24 17.18 37.16 26.95 60.13 26.8 35.06.09 66.16-22.49 76.94-55.86 22.51-4.61 41.94-18.7 53.31-38.67 17.57-30.32 13.55-68.51-9.94-94.51zm-120.28 168.11c-14.03.02-27.62-4.89-38.39-13.88.49-.26 1.34-.73 1.89-1.07l63.72-36.8c3.26-1.85 5.26-5.32 5.24-9.07v-89.83l26.93 15.55c.29.14.48.42.52.74v74.39c-.04 33.08-26.83 59.9-59.91 59.97zm-128.84-55.03c-7.03-12.14-9.56-26.37-7.15-40.18.47.28 1.3.79 1.89 1.13l63.72 36.8c3.23 1.89 7.23 1.89 10.47 0l77.79-44.92v31.1c.02.32-.13.63-.38.83l-64.41 37.19c-28.69 16.52-65.33 6.7-81.92-21.95zm-16.77-139.09c7-12.16 18.05-21.46 31.21-26.29 0 .55-.03 1.52-.03 2.2v73.61c-.02 3.74 1.98 7.21 5.23 9.06l77.79 44.91-26.93 15.55c-.27.18-.61.21-.91.08l-64.42-37.22c-28.63-16.58-38.45-53.21-21.95-81.89zm221.26 51.49-77.79-44.92 26.93-15.54c.27-.18.61-.21.91-.08l64.42 37.19c28.68 16.57 38.51 53.26 21.94 81.94-7.01 12.14-18.05 21.44-31.2 26.28v-75.81c.03-3.74-1.96-7.2-5.2-9.06zm26.8-40.34c-.47-.29-1.3-.79-1.89-1.13l-63.72-36.8c-3.23-1.89-7.23-1.89-10.47 0l-77.79 44.92v-31.1c-.02-.32.13-.63.38-.83l64.41-37.16c28.69-16.55 65.37-6.7 81.91 22 6.99 12.12 9.52 26.31 7.15 40.1zm-168.51 55.43-26.94-15.55c-.29-.14-.48-.42-.52-.74v-74.39c.02-33.12 26.89-59.96 60.01-59.94 14.01 0 27.57 4.92 38.34 13.88-.49.26-1.33.73-1.89 1.07l-63.72 36.8c-3.26 1.85-5.26 5.31-5.24 9.06l-.04 89.79zm14.63-31.54 34.65-20.01 34.65 20v40.01l-34.65 20-34.65-20z"/></svg>`,
 };
 
+function renderLogo(logo) {
+  if (!logo) return '';
+  if (String(logo).startsWith('data:image/')) return `<img src="${logo}" alt="">`;
+  return logo;
+}
+
 function currentEntry() { return entries[currentIndex] || null; }
+
+function isDeepSeekCompactEntry() {
+  const entry = currentEntry();
+  return Boolean(entry && entry.provider === 'deepseek' && entry.simpleMode);
+}
 
 function formatTime() {
   return new Date().toLocaleTimeString('zh-CN', { hour12: false });
@@ -84,8 +97,8 @@ function renderHeader() {
   elLogo.className = 'logo';
   if (entry) {
     elLogo.classList.add(`provider-${entry.provider}`);
-    elLogo.innerHTML = PROVIDER_LOGOS[entry.provider] || '';
-    elTitle.textContent = entry.name || 'API Monitor';
+    elLogo.innerHTML = renderLogo(entry.providerLogo || PROVIDER_LOGOS[entry.provider] || '');
+    elTitle.textContent = entry.simpleMode && entry.provider === 'deepseek' ? '' : (entry.name || 'API Monitor');
   } else {
     elLogo.innerHTML = '';
     elTitle.textContent = 'API Monitor';
@@ -95,14 +108,22 @@ function renderHeader() {
 function applyTranslations() {
   const entry = currentEntry();
   const isCodex = entry && entry.provider === 'codex';
+  const isCustom = entry && entry.providerCustom;
+  const isDeepSeekCompact = entry && entry.provider === 'deepseek' && entry.simpleMode;
 
   // Resize widget height
-  if (isCodex) {
-    elWidget.classList.add('widget-codex');
-  } else {
-    elWidget.classList.remove('widget-codex');
+  elWidget.classList.toggle('widget-codex', Boolean(isCodex));
+  elWidget.classList.toggle('widget-compact', Boolean(isDeepSeekCompact));
+  elWidget.classList.toggle('widget-custom', Boolean(isCustom));
+  elDropdown.classList.toggle('dropdown-compact', Boolean(isDeepSeekCompact));
+  if (isCodex) window.api.resizeWidget('codex');
+  else if (isDeepSeekCompact) window.api.resizeWidget('deepseek-compact');
+  else if (isCustom) {
+    elWidget.style.setProperty('--custom-widget-height', `${entry.providerWidgetCardHeight || 212}px`);
+    renderCustomTemplate(entry);
+    window.api.resizeWidget({ provider: 'custom', height: entry.providerWidgetHeight || 372 });
   }
-  window.api.resizeWidget(isCodex ? 'codex' : 'deepseek');
+  else window.api.resizeWidget('deepseek');
 
   // Toggle views
   elBalanceView.style.display = isCodex ? 'none' : '';
@@ -112,7 +133,7 @@ function applyTranslations() {
     document.getElementById('lbl-5h').textContent = t('fiveHourUsage');
     document.getElementById('lbl-7d').textContent = t('sevenDayUsage');
     document.getElementById('lbl-credits').textContent = t('credits');
-  } else {
+  } else if (!isCustom) {
     document.getElementById('lbl-total').textContent = t('totalBalance');
     document.getElementById('lbl-granted').textContent = t('granted');
     document.getElementById('lbl-topped').textContent = t('toppedUp');
@@ -121,9 +142,10 @@ function applyTranslations() {
   document.getElementById('empty-msg').textContent = t('noEntries');
   document.getElementById('btn-open-settings').textContent = t('openSettings');
   btnDeepSeekDashboard.textContent = t('dashboard');
-  btnDeepSeekDashboard.classList.toggle('hidden', !entry || entry.provider !== 'deepseek');
+  btnDeepSeekDashboard.classList.toggle('hidden', !entry || entry.provider !== 'deepseek' || isDeepSeekCompact);
   btnRefresh.innerHTML = '&#x21bb; ' + t('refresh');
   elDropdownSearch.placeholder = t('search');
+  applyDeepSeekSimpleState();
 }
 
 function showEmptyState() {
@@ -143,13 +165,35 @@ function showBalanceView() {
 }
 
 function setLoading() {
+  const entry = currentEntry();
+  const isCustom = entry && entry.providerCustom;
   // DeepSeek
+  document.getElementById('lbl-total').parentElement.classList.remove('hidden');
+  document.getElementById('lbl-granted').parentElement.classList.remove('hidden');
+  document.getElementById('lbl-topped').parentElement.classList.remove('hidden');
+  document.getElementById('lbl-total').classList.remove('hidden');
   [elTotal, elGranted, elTopped].forEach(el => {
     el.textContent = '--';
     el.classList.add('loading');
     el.classList.remove('codex-value');
   });
   elError.classList.add('hidden');
+  if (isCustom) {
+    document.getElementById('lbl-total').parentElement.classList.add('hidden');
+    document.getElementById('lbl-granted').parentElement.classList.add('hidden');
+    document.getElementById('lbl-topped').parentElement.classList.add('hidden');
+    btnDeepSeekDashboard.classList.add('hidden');
+    renderCustomTemplate(entry);
+    elCustomBlocks.querySelectorAll('.custom-balance-value').forEach(el => {
+      el.textContent = '--';
+      el.classList.add('loading');
+    });
+  } else {
+    elCustomBlocks.innerHTML = '';
+    elCustomBlocks.classList.add('hidden');
+    customTemplateKey = '';
+  }
+  if (!isCustom) applyDeepSeekSimpleState();
   // Codex
   [elPct5h, elPct7d].forEach(el => { el.textContent = '--'; el.style.color = ''; });
   elBar5h.style.width = '0%';
@@ -167,6 +211,8 @@ function setLoading() {
 function displayBalance(balance, provider) {
   if (provider === 'codex') {
     displayCodexBalance(balance);
+  } else if (balance.provider === 'custom') {
+    displayCustomBalance(balance);
   } else {
     elTotal.textContent = balance.total_balance.toFixed(2);
     elGranted.textContent = balance.granted_balance.toFixed(2);
@@ -176,8 +222,52 @@ function displayBalance(balance, provider) {
       el.classList.remove('loading');
     });
     elError.classList.add('hidden');
+    applyDeepSeekSimpleState();
   }
   elStatus.textContent = formatTime();
+}
+
+function applyDeepSeekSimpleState() {
+  const entry = currentEntry();
+  const compact = entry && entry.provider === 'deepseek' && entry.simpleMode;
+  document.getElementById('lbl-total').classList.remove('hidden');
+  document.getElementById('lbl-granted').parentElement.classList.toggle('hidden', Boolean(compact));
+  document.getElementById('lbl-topped').parentElement.classList.toggle('hidden', Boolean(compact));
+  btnDeepSeekDashboard.classList.toggle('hidden', Boolean(compact));
+}
+
+function displayCustomBalance(balance) {
+  document.getElementById('lbl-total').parentElement.classList.add('hidden');
+  document.getElementById('lbl-granted').parentElement.classList.add('hidden');
+  document.getElementById('lbl-topped').parentElement.classList.add('hidden');
+  btnDeepSeekDashboard.classList.add('hidden');
+  renderCustomTemplate(currentEntry());
+  (balance.customItems || []).forEach(item => {
+    if (item.type !== 'balance') return;
+    const valueEl = elCustomBlocks.querySelector(`.custom-balance-value[data-custom-monitor-id="${cssEscape(item.id || '')}"]`);
+    if (!valueEl) return;
+    valueEl.textContent = Number(item.value || 0).toFixed(2);
+    valueEl.classList.remove('loading');
+  });
+  elCustomBlocks.classList.remove('hidden');
+  elError.classList.add('hidden');
+}
+
+function renderCustomTemplate(entry) {
+  if (!entry || !entry.providerCustom) return;
+  const key = `${entry.provider}:${entry.providerWidgetHtml || ''}`;
+  if (customTemplateKey === key) {
+    elCustomBlocks.classList.remove('hidden');
+    return;
+  }
+  customTemplateKey = key;
+  elCustomBlocks.innerHTML = entry.providerWidgetHtml || '';
+  elCustomBlocks.classList.remove('hidden');
+}
+
+function cssEscape(value) {
+  if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(String(value));
+  return String(value).replace(/["\\]/g, '\\$&');
 }
 
 function displayCodexBalance(b) {
@@ -359,7 +449,7 @@ function buildDropdownItems(filter) {
     div.classList.add(`provider-${entry.provider}`);
     div.dataset.index = idx;
     div.innerHTML = `
-      <span class="item-logo">${PROVIDER_LOGOS[entry.provider] || ''}</span>
+      <span class="item-logo">${renderLogo(entry.providerLogo || PROVIDER_LOGOS[entry.provider] || '')}</span>
       <span class="item-name">${escapeHtml(entry.name || 'Unnamed')}</span>
       <span class="item-check">&#x2713;</span>
     `;
@@ -391,17 +481,30 @@ elDropdownSearch.addEventListener('keydown', (e) => {
 elPrev.addEventListener('click', () => switchEntryDelta(-1));
 elNext.addEventListener('click', () => switchEntryDelta(1));
 
-elTitle.addEventListener('click', (e) => {
-  e.stopPropagation();
+function toggleDropdown(event) {
+  event.stopPropagation();
+  if (!currentEntry()) return;
   if (dropdownOpen) {
     closeDropdown();
   } else {
     openDropdown();
   }
-});
+}
+
+elLogo.addEventListener('click', toggleDropdown);
 
 btnRefresh.addEventListener('click', refreshBalance);
 btnDeepSeekDashboard.addEventListener('click', () => window.api.openDeepSeekDashboard());
+elCustomBlocks.addEventListener('click', event => {
+  const btn = event.target.closest('.custom-dashboard-btn');
+  if (!btn) return;
+  const url = btn.dataset.customDashboardUrl;
+  if (url) window.api.openExternalUrl(url);
+});
+elTotal.parentElement.addEventListener('dblclick', () => {
+  const entry = currentEntry();
+  if (entry && entry.provider === 'deepseek' && entry.simpleMode) window.api.openDeepSeekDashboard();
+});
 btnSettings.addEventListener('click', () => window.api.openSettings());
 btnMinimize.addEventListener('click', () => window.api.minimizeWindow());
 document.getElementById('btn-exit').addEventListener('click', () => window.api.quitApp());

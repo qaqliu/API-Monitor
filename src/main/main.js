@@ -65,8 +65,8 @@ function createSettingsWindow() {
   }
 
   settingsWindow = new BrowserWindow({
-    width: 580,
-    height: 500,
+    width: 660,
+    height: 560,
     resizable: false,
     center: true,
     title: 'API Monitor - Settings',

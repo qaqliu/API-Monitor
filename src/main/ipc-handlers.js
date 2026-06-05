@@ -1,10 +1,12 @@
-const { ipcMain, app, shell } = require('electron');
+const { ipcMain, app, shell, screen } = require('electron');
 const { fetchBalanceByEntry } = require('../services/providers');
+const { getAllProviders } = require('../services/providers');
 const {
   getEntries, getEntry, addEntry, updateEntry, deleteEntry,
   getCurrentIndex, setCurrentIndex,
   getRefreshInterval, setRefreshInterval,
   getLanguage, setLanguage,
+  getCustomProviders, addCustomProvider, updateCustomProvider, deleteCustomProvider,
 } = require('../services/store');
 const { restartAutoRefresh } = require('./auto-refresh');
 const { updateTrayTooltip } = require('./tray');
@@ -56,14 +58,26 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
   // --- Entries CRUD ---
   ipcMain.handle('get-entries', () => {
     const entries = getEntries();
+    const providers = getAllProviders();
     // Return with masked keys
-    return entries.map(e => ({
+    return entries.map(e => {
+      const provider = providers.find(p => p.id === e.provider) || {};
+      return {
       id: e.id,
       name: e.name,
       provider: e.provider,
+      providerName: provider.name || e.provider,
+      providerLogo: provider.logo || '',
+      providerCustom: Boolean(provider.custom),
+      providerMonitors: provider.monitors || [],
+      providerWidgetHeight: provider.widgetHeight,
+      providerWidgetCardHeight: provider.widgetCardHeight,
+      providerWidgetHtml: provider.widgetHtml || '',
       apiKey: maskKey(e.apiKey),
       refreshInterval: e.refreshInterval,
-    }));
+      simpleMode: Boolean(e.simpleMode),
+    };
+    });
   });
 
   ipcMain.handle('add-entry', (_event, data) => {
@@ -72,6 +86,7 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
       provider: data.provider,
       apiKey: data.apiKey,
       refreshInterval: data.refreshInterval ?? null,
+      simpleMode: Boolean(data.simpleMode),
     });
     if (getEntries().length === 1) setCurrentIndex(0);
     notifyEntriesChanged();
@@ -92,6 +107,28 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
 
   ipcMain.handle('delete-entry', (_event, id) => {
     deleteEntry(id);
+    notifyEntriesChanged();
+    return { success: true };
+  });
+
+  ipcMain.handle('get-providers', () => getAllProviders());
+
+  ipcMain.handle('get-custom-providers', () => getCustomProviders());
+
+  ipcMain.handle('add-custom-provider', (_event, data) => {
+    const provider = addCustomProvider(data);
+    notifyEntriesChanged();
+    return { success: true, provider };
+  });
+
+  ipcMain.handle('update-custom-provider', (_event, id, fields) => {
+    updateCustomProvider(id, fields);
+    notifyEntriesChanged();
+    return { success: true };
+  });
+
+  ipcMain.handle('delete-custom-provider', (_event, id) => {
+    deleteCustomProvider(id);
     notifyEntriesChanged();
     return { success: true };
   });
@@ -141,12 +178,26 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
     if (widgetWindow && !widgetWindow.isDestroyed()) widgetWindow.hide();
   });
 
-  ipcMain.on('resize-widget', (_event, provider) => {
+  ipcMain.on('resize-widget', (_event, requested) => {
     if (!widgetWindow || widgetWindow.isDestroyed()) return;
-    const h = provider === 'codex' ? 390 : 370;
+    const provider = typeof requested === 'object' && requested ? requested.provider : requested;
+    const sizes = {
+      codex: { width: 260, height: 390 },
+      'deepseek-compact': { width: 154, height: 250 },
+      deepseek: { width: 260, height: 372 },
+      custom: { width: 260, height: 390 },
+    };
+    const size = { ...(sizes[provider] || sizes.deepseek) };
+    if (typeof requested === 'object' && requested && requested.height) {
+      size.height = requested.height;
+    }
     const [x, y] = widgetWindow.getPosition();
-    const newY = Math.max(0, y + (widgetWindow.getSize()[1] - h));
-    widgetWindow.setBounds({ x, y: newY, width: 260, height: h });
+    const [oldWidth, oldHeight] = widgetWindow.getSize();
+    const display = screen.getDisplayMatching({ x, y, width: oldWidth, height: oldHeight });
+    const area = display.workArea;
+    const nextX = clamp(x, area.x, area.x + area.width - size.width);
+    const nextY = clamp(y + oldHeight - size.height, area.y, area.y + area.height - size.height);
+    widgetWindow.setBounds({ x: nextX, y: nextY, width: size.width, height: size.height });
   });
 
   ipcMain.on('quit-app', () => {
@@ -159,6 +210,10 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
 
   ipcMain.on('open-deepseek-dashboard', () => {
     shell.openExternal('https://platform.deepseek.com/usage');
+  });
+
+  ipcMain.on('open-external-url', (_event, url) => {
+    if (/^https?:\/\//i.test(url || '')) shell.openExternal(url);
   });
 
   ipcMain.on('close-settings', () => {
@@ -181,6 +236,26 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
     });
     if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
+  });
+
+  ipcMain.handle('browse-logo-file', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Select provider logo',
+      filters: [
+        { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'svg'] },
+      ],
+      properties: ['openFile'],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = result.filePaths[0];
+    const ext = path.extname(filePath).slice(1).toLowerCase();
+    const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+    return {
+      name: path.basename(filePath),
+      dataUrl: `data:${mime};base64,${fs.readFileSync(filePath).toString('base64')}`,
+    };
   });
 
   // --- Updater ---
@@ -208,6 +283,10 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
 function maskKey(key) {
   if (!key || key.length < 8) return key;
   return key.substring(0, 4) + '*'.repeat(Math.min(key.length - 8, 20)) + key.slice(-4);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(value, max));
 }
 
 function setSettingsWindow(win) { settingsWindow = win; }

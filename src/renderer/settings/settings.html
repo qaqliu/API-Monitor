@@ -15,6 +15,7 @@
       <div class="sidebar">
         <button class="cat-btn active" data-cat="general" id="cat-general">General</button>
         <button class="cat-btn" data-cat="monitor" id="cat-monitor">Monitor</button>
+        <button class="cat-btn" data-cat="providers" id="cat-providers">Providers</button>
       </div>
       <div class="content">
         <!-- General panel -->
@@ -62,6 +63,13 @@
             </select>
           </div>
         </div>
+        <div class="panel" id="panel-providers">
+          <div class="section">
+            <label id="lbl-custom-providers">Custom Providers</label>
+            <div id="custom-provider-list"></div>
+            <button id="btn-add-provider" class="btn-add">+ Add Provider</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -80,10 +88,20 @@
         </div>
         <div class="field">
           <label for="entry-provider" id="lbl-provider">Provider</label>
-          <select id="entry-provider">
+          <div class="provider-combo">
+            <input type="text" id="entry-provider-search" class="provider-search" placeholder="Search provider..." autocomplete="off">
+            <div id="entry-provider-options" class="provider-options hidden"></div>
+          </div>
+          <select id="entry-provider" class="hidden-native-select">
             <option value="deepseek">DeepSeek</option>
             <option value="codex">Codex (ChatGPT)</option>
           </select>
+        </div>
+        <div class="field checkbox-field hidden" id="deepseek-simple-field">
+          <label>
+            <input type="checkbox" id="entry-simple-mode">
+            <span id="lbl-simple-mode">Compact mode</span>
+          </label>
         </div>
         <div class="field">
           <label for="entry-key" id="lbl-apikey">API Key</label>
@@ -124,6 +142,71 @@
       <div class="modal-footer">
         <button id="modal-cancel">Cancel</button>
         <button id="modal-save" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="provider-modal-overlay" class="modal-overlay hidden">
+    <div class="modal provider-modal">
+      <div class="modal-header">
+        <span id="provider-modal-title">Add Provider</span>
+        <button id="provider-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label id="lbl-provider-logo">Logo</label>
+          <div class="logo-editor">
+            <div id="logo-preview" class="logo-preview"></div>
+            <div class="logo-controls">
+              <button id="btn-choose-logo">Choose Image</button>
+              <p class="field-hint" id="logo-crop-hint">Choose an image and crop a square logo.</p>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label for="custom-provider-name" id="lbl-custom-provider-name">Provider Name</label>
+          <input id="custom-provider-name" type="text" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="custom-provider-base" id="lbl-custom-provider-base">Base URL</label>
+          <input id="custom-provider-base" type="text" placeholder="https://api.example.com/v1" autocomplete="off">
+        </div>
+        <div class="field">
+          <label id="lbl-monitor-blocks">Monitor Blocks</label>
+          <div id="monitor-block-list"></div>
+          <div class="monitor-actions">
+            <button id="btn-add-balance-monitor">+ Balance</button>
+            <button id="btn-add-dashboard-monitor">+ Dashboard</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="provider-modal-cancel">Cancel</button>
+        <button id="provider-modal-save" class="primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="logo-crop-modal-overlay" class="modal-overlay hidden">
+    <div class="modal logo-crop-modal">
+      <div class="modal-header">
+        <span id="logo-crop-title">Crop Logo</span>
+        <button id="logo-crop-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="logo-crop-stage" class="logo-crop-stage">
+          <img id="logo-crop-image" alt="">
+          <div id="logo-crop-box" class="logo-crop-box">
+            <span class="crop-handle nw"></span>
+            <span class="crop-handle ne"></span>
+            <span class="crop-handle sw"></span>
+            <span class="crop-handle se"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="logo-crop-cancel">Cancel</button>
+        <button id="logo-crop-apply" class="primary">Apply</button>
       </div>
     </div>
   </div>
