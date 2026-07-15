@@ -199,8 +199,8 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
     if (!widgetWindow || widgetWindow.isDestroyed()) return;
     const provider = typeof requested === 'object' && requested ? requested.provider : requested;
     const sizes = {
-      codex: { width: 260, height: 230 },
-      'deepseek-compact': { width: 154, height: 90 },
+      codex: { width: 260, height: 188 },
+      'deepseek-compact': { width: 154, height: 94 },
       deepseek: { width: 260, height: 212 },
       custom: { width: 260, height: 212 },
     };

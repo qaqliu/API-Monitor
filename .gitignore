@@ -2,7 +2,11 @@ node_modules/
 dist/
 API Monitor*.exe
 .env/
+.env
+.env.*
 *.log
+.agents/
+.codex/
 AGENT_CHANGELOG.log
 .DS_Store
 Thumbs.db

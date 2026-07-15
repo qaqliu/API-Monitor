@@ -176,12 +176,12 @@ body {
 }
 
 #widget.widget-codex {
-  height: 230px;
+  height: 188px;
 }
 
 #widget.widget-compact {
   width: 154px;
-  height: auto;
+  height: 94px;
 }
 
 #widget.widget-compact .header {
@@ -654,7 +654,8 @@ body {
 #codex-view {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: center;
+  gap: 12px;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -663,7 +664,7 @@ body {
 .codex-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .codex-row-header {
@@ -673,29 +674,33 @@ body {
 }
 
 .codex-label {
-  font-size: 12px;
+  font-family: 'Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
   color: rgba(255, 255, 255, 0.55);
 }
 
 .codex-pct {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
+  line-height: 20px;
   color: #4caf84;
   font-variant-numeric: tabular-nums;
 }
 
 /* Progress bar */
 .codex-bar {
-  height: 4px;
+  height: 5px;
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .codex-bar-fill {
   height: 100%;
   background: #4caf84;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: width 0.4s ease;
   min-width: 0;
 }
@@ -729,7 +734,7 @@ body {
 }
 
 .reset-text {
-  font-size: 10px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -738,13 +743,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 2px;
+  padding-top: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .codex-value {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
+  line-height: 20px;
   color: rgba(255, 255, 255, 0.7);
   font-variant-numeric: tabular-nums;
 }

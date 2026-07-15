@@ -13,7 +13,7 @@ API Monitor is a lightweight Electron desktop widget for tracking API balances, 
 | Provider | What it monitors |
 | --- | --- |
 | DeepSeek | Total, granted, and topped-up account balance in CNY |
-| Codex (ChatGPT) | 5-hour and 7-day usage windows plus credit balance |
+| Codex (ChatGPT) | 7-day usage window plus credit balance |
 | Custom Provider | User-defined balance rows and dashboard links from JSON APIs |
 
 ### Highlights
@@ -93,7 +93,7 @@ API Monitor 是一个轻量级 Electron 桌面悬浮小组件，用于监控 API
 | Provider | 监控内容 |
 | --- | --- |
 | DeepSeek | 人民币总余额、赠送余额、充值余额 |
-| Codex (ChatGPT) | 5 小时 / 7 天用量窗口，以及积分额度 |
+| Codex (ChatGPT) | 7 天用量窗口，以及积分额度 |
 | 自定义 Provider | 从 JSON API 中提取用户自定义余额行，并添加官网仪表盘链接 |
 
 ### 功能亮点

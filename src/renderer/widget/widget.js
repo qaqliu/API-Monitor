@@ -22,13 +22,9 @@ const btnDeepSeekDashboard = document.getElementById('btn-deepseek-dashboard');
 const elCustomBlocks = document.getElementById('custom-blocks');
 
 // Codex DOM refs
-const elPct5h = document.getElementById('val-5h-pct');
 const elPct7d = document.getElementById('val-7d-pct');
-const elBar5h = document.getElementById('bar-5h');
 const elBar7d = document.getElementById('bar-7d');
-const elRing5h = document.getElementById('ring-5h');
 const elRing7d = document.getElementById('ring-7d');
-const elReset5h = document.getElementById('reset-5h');
 const elReset7d = document.getElementById('reset-7d');
 const elCredits = document.getElementById('val-credits');
 const elErrorCodex = document.getElementById('error-message-codex');
@@ -48,7 +44,7 @@ let customTemplateKey = '';
 const T = {
   en: {
     totalBalance: 'Total Balance', granted: 'Granted', toppedUp: 'Topped Up',
-    fiveHourUsage: '5h Usage', sevenDayUsage: '7d Usage', credits: 'Credits',
+    sevenDayUsage: '7d Usage', credits: 'Credits',
     remaining: 'remaining',
     noEntries: 'No entries configured.', openSettings: 'Open Settings',
     refresh: 'Refresh', dashboard: 'Dashboard', search: 'Search...', noMatches: 'No matches',
@@ -56,7 +52,7 @@ const T = {
   },
   'zh-CN': {
     totalBalance: '总余额', granted: '赠送余额', toppedUp: '充值余额',
-    fiveHourUsage: '5小时用量', sevenDayUsage: '7天用量', credits: '积分额度',
+    sevenDayUsage: '7天用量', credits: '积分额度',
     remaining: '后重置',
     noEntries: '暂无监控条目。', openSettings: '打开设置',
     refresh: '刷新', dashboard: '官网仪表盘', search: '搜索...', noMatches: '无匹配结果',
@@ -120,8 +116,8 @@ function applyTranslations() {
   elWidget.classList.toggle('entry-list-disabled', !entryListEnabled);
   elDropdown.classList.toggle('dropdown-compact', Boolean(isDeepSeekCompact));
   if (!entryListEnabled) closeDropdown();
-  if (isCodex) resizeWidgetForCurrentEntry('codex', 230);
-  else if (isDeepSeekCompact) resizeWidgetForCurrentEntry('deepseek-compact', 90);
+  if (isCodex) resizeWidgetForCurrentEntry('codex', 188);
+  else if (isDeepSeekCompact) resizeWidgetForCurrentEntry('deepseek-compact', 94);
   else if (isCustom) {
     elWidget.style.setProperty('--custom-widget-height', `${entry.providerWidgetCardHeight || 212}px`);
     renderCustomTemplate(entry);
@@ -134,7 +130,6 @@ function applyTranslations() {
   elCodexView.style.display = isCodex ? '' : 'none';
 
   if (isCodex) {
-    document.getElementById('lbl-5h').textContent = t('fiveHourUsage');
     document.getElementById('lbl-7d').textContent = t('sevenDayUsage');
     document.getElementById('lbl-credits').textContent = t('credits');
   } else if (!isCustom) {
@@ -210,14 +205,11 @@ function setLoading() {
   }
   if (!isCustom) applyDeepSeekSimpleState();
   // Codex
-  [elPct5h, elPct7d].forEach(el => { el.textContent = '--'; el.style.color = ''; });
-  elBar5h.style.width = '0%';
-  elBar5h.style.backgroundColor = '';
+  elPct7d.textContent = '--';
+  elPct7d.style.color = '';
   elBar7d.style.width = '0%';
   elBar7d.style.backgroundColor = '';
-  setRingProgress(elRing5h, 0);
   setRingProgress(elRing7d, 0);
-  elReset5h.textContent = '--';
   elReset7d.textContent = '--';
   elCredits.textContent = '--';
   elErrorCodex.classList.add('hidden');
@@ -286,20 +278,17 @@ function cssEscape(value) {
 }
 
 function displayCodexBalance(b) {
-  // 5h
-  const pPct = b.primary_used_percent;
-  elPct5h.textContent = pPct != null ? `${pPct}%` : '--';
-  elPct5h.style.color = pctColor(pPct);
-  elBar5h.style.width = pPct != null ? `${Math.min(pPct, 100)}%` : '0%';
-  elBar5h.style.backgroundColor = pctColor(pPct);
-  renderCodexReset(elRing5h, elReset5h, b.primary_reset_after_seconds, 18000, false);
-  // 7d
-  const sPct = b.secondary_used_percent;
+  const sPct = b.weekly_used_percent ?? b.secondary_used_percent;
   elPct7d.textContent = sPct != null ? `${sPct}%` : '--';
   elPct7d.style.color = pctColor(sPct);
   elBar7d.style.width = sPct != null ? `${Math.min(sPct, 100)}%` : '0%';
   elBar7d.style.backgroundColor = pctColor(sPct);
-  renderCodexReset(elRing7d, elReset7d, b.secondary_reset_after_seconds, 604800, true);
+  renderCodexReset(
+    elRing7d,
+    elReset7d,
+    b.weekly_reset_after_seconds ?? b.secondary_reset_after_seconds,
+    b.weekly_limit_window_seconds || 604800
+  );
   // Credits
   elCredits.textContent = `$${(b.credits_balance || 0).toFixed(2)}`;
   elErrorCodex.classList.add('hidden');
@@ -321,7 +310,7 @@ function setRingProgress(el, fraction) {
   el.setAttribute('stroke-dashoffset', offset);
 }
 
-function renderCodexReset(ringEl, textEl, resetAfterSec, windowSec, isWeekly) {
+function renderCodexReset(ringEl, textEl, resetAfterSec, windowSec) {
   if (resetAfterSec == null) {
     setRingProgress(ringEl, 0);
     textEl.textContent = '--';
@@ -332,27 +321,22 @@ function renderCodexReset(ringEl, textEl, resetAfterSec, windowSec, isWeekly) {
   setRingProgress(ringEl, fraction);
 
   const rem = t('remaining');
-  if (isWeekly) {
-    const d = Math.floor(remaining / 86400);
-    const h = Math.floor((remaining % 86400) / 3600);
-    textEl.textContent = `${d}d ${h}h ${rem}`;
-  } else {
-    const h = Math.floor(remaining / 3600);
-    const m = Math.floor((remaining % 3600) / 60);
-    textEl.textContent = `${h}h ${m}min ${rem}`;
-  }
+  const d = Math.floor(remaining / 86400);
+  const h = Math.floor((remaining % 86400) / 3600);
+  const m = Math.floor((remaining % 3600) / 60);
+  textEl.textContent = `${d}d ${h}h ${m}m ${rem}`;
 }
 
 function displayError(code, message) {
   const entry = currentEntry();
   if (entry && entry.provider === 'codex') {
     elCodexView.style.display = '';
-    elPct5h.textContent = '--'; elPct7d.textContent = '--';
-    elPct5h.style.color = ''; elPct7d.style.color = '';
-    elBar5h.style.width = '0%'; elBar7d.style.width = '0%';
-    elBar5h.style.backgroundColor = ''; elBar7d.style.backgroundColor = '';
-    setRingProgress(elRing5h, 0); setRingProgress(elRing7d, 0);
-    elReset5h.textContent = '--'; elReset7d.textContent = '--';
+    elPct7d.textContent = '--';
+    elPct7d.style.color = '';
+    elBar7d.style.width = '0%';
+    elBar7d.style.backgroundColor = '';
+    setRingProgress(elRing7d, 0);
+    elReset7d.textContent = '--';
     elCredits.textContent = '--';
     elErrorCodex.textContent = message;
     elErrorCodex.classList.remove('hidden');
