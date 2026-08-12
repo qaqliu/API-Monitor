@@ -14,6 +14,7 @@ API Monitor is a lightweight Electron desktop widget for tracking API balances, 
 | --- | --- |
 | DeepSeek | Total, granted, and topped-up account balance in CNY |
 | Codex (ChatGPT) | 7-day usage window plus credit balance |
+| Codex Edu | Education plan 5-hour and 7-day usage windows |
 | Custom Provider | User-defined balance rows and dashboard links from JSON APIs |
 
 ### Highlights
@@ -23,6 +24,7 @@ API Monitor is a lightweight Electron desktop widget for tracking API balances, 
 - **DeepSeek compact mode**: a smaller balance-only widget that still keeps refresh controls.
 - **DeepSeek dashboard shortcut**: open the official usage dashboard from the widget.
 - **Codex proxy-friendly requests**: provider HTTP requests prefer Electron's network stack so they can use system proxy/PAC settings.
+- **Codex Edu support**: add a separate education-plan entry that reads the same Codex auth file and displays Edu-specific quota windows.
 - **Custom Providers**: configure providers in Settings with a base URL, cropped logo, balance blocks, dashboard blocks, and drag-and-drop ordering.
 - **Saved custom widget layout**: custom provider widget size and UI template are generated when the provider is saved, then reused during refresh.
 - **Auto-refresh**: per-entry refresh interval or global default.

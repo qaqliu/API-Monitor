@@ -246,7 +246,7 @@ function logoForProvider(id) {
 }
 
 function updateKeyField() {
-  const isCodex = elEntryProvider.value === 'codex';
+  const isCodex = isCodexProvider(elEntryProvider.value);
   const isDeepSeek = elEntryProvider.value === 'deepseek';
   document.getElementById('lbl-apikey').textContent = isCodex ? t('authPath') : t('apiKey');
   elEntryKey.placeholder = isCodex ? 'C:\\Users\\...\\.codex\\auth.json' : 'sk-...';
@@ -386,7 +386,7 @@ async function saveModal() {
     if (elEntryKey.dataset.masked !== 'true') fields.apiKey = keyValue;
     await window.settingsAPI.updateEntry(editingId, fields);
   } else {
-    if (!keyValue && provider !== 'codex') return;
+    if (!keyValue && !isCodexProvider(provider)) return;
     await window.settingsAPI.addEntry({
       name,
       provider,
@@ -397,6 +397,10 @@ async function saveModal() {
   }
   closeModal();
   await renderEntries();
+}
+
+function isCodexProvider(provider) {
+  return provider === 'codex' || provider === 'codex-edu';
 }
 
 async function deleteEntry(id) {

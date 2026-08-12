@@ -100,11 +100,12 @@ function updateTrayTooltip(balance, entry) {
   if (!tray) return;
   if (balance && entry) {
     const name = entry.name || entry.provider;
-    if (entry.provider === 'codex') {
+    if (entry.provider === 'codex' || entry.provider === 'codex-edu') {
       const sPct = balance.weekly_used_percent ?? balance.secondary_used_percent;
-      tray.setToolTip(
-        `${name}\n7d: ${sPct != null ? sPct + '%' : '--'}`
-      );
+      const pPct = balance.primary_used_percent;
+      const lines = [`${name}`, `7d: ${sPct != null ? sPct + '%' : '--'}`];
+      if (entry.provider === 'codex-edu') lines.splice(1, 0, `5h: ${pPct != null ? pPct + '%' : '--'}`);
+      tray.setToolTip(lines.join('\n'));
     } else if (balance.provider === 'custom') {
       const first = (balance.customItems || [])[0];
       tray.setToolTip(`${name}\n${first ? `${first.label}: ${Number(first.value || 0).toFixed(2)}` : 'Custom provider'}`);

@@ -44,5 +44,6 @@ function getRuntimeCustomProvider(id) {
 // 注册内置 Provider
 register(require('./deepseek'));
 register(require('./codex'));
+register(require('./codex-edu'));
 
 module.exports = { register, getProvider, getAllProviders, fetchBalanceByEntry };

@@ -200,6 +200,7 @@ function registerIpcHandlers(widgetWin, createSettingsFn) {
     const provider = typeof requested === 'object' && requested ? requested.provider : requested;
     const sizes = {
       codex: { width: 260, height: 188 },
+      'codex-edu': { width: 260, height: 218 },
       'deepseek-compact': { width: 154, height: 94 },
       deepseek: { width: 260, height: 212 },
       custom: { width: 260, height: 212 },

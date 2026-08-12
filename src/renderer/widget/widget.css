@@ -179,6 +179,10 @@ body {
   height: 188px;
 }
 
+#widget.widget-codex.widget-codex-edu {
+  height: 218px;
+}
+
 #widget.widget-compact {
   width: 154px;
   height: 94px;
@@ -667,6 +671,10 @@ body {
   gap: 6px;
 }
 
+.codex-section.hidden {
+  display: none;
+}
+
 .codex-row-header {
   display: flex;
   justify-content: space-between;
@@ -745,6 +753,10 @@ body {
   align-items: center;
   padding-top: 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.codex-credits.hidden {
+  display: none;
 }
 
 .codex-value {
