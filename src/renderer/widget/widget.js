@@ -18,7 +18,7 @@ const elEmptyView = document.getElementById('empty-view');
 const elDropdown = document.getElementById('entry-dropdown');
 const elDropdownSearch = document.getElementById('dropdown-search-input');
 const elDropdownList = document.getElementById('dropdown-list');
-const btnDeepSeekDashboard = document.getElementById('btn-deepseek-dashboard');
+const btnProviderDashboard = document.getElementById('btn-provider-dashboard');
 const elCustomBlocks = document.getElementById('custom-blocks');
 
 // Codex DOM refs
@@ -50,6 +50,8 @@ let customTemplateKey = '';
 const T = {
   en: {
     totalBalance: 'Total Balance', granted: 'Granted', toppedUp: 'Topped Up',
+    currentMonthSpend: 'This Month Spend', currentMonthTokens: 'This Month Tokens',
+    currentMonthRequests: 'This Month Requests',
     fiveHourUsage: '5h Usage',
     sevenDayUsage: '7d Usage', credits: 'Credits',
     remaining: 'remaining',
@@ -59,6 +61,8 @@ const T = {
   },
   'zh-CN': {
     totalBalance: '总余额', granted: '赠送余额', toppedUp: '充值余额',
+    currentMonthSpend: '本月消费', currentMonthTokens: '本月Token',
+    currentMonthRequests: '本月请求数',
     sevenDayUsage: '7天用量', credits: '积分额度',
     remaining: '后重置',
     noEntries: '暂无监控条目。', openSettings: '打开设置',
@@ -128,12 +132,14 @@ function applyTranslations() {
   const entry = currentEntry();
   const isCodex = entry && isCodexProvider(entry.provider);
   const isCodexEdu = entry && isCodexEduProvider(entry.provider);
+  const isOpenAI = entry && entry.provider === 'openai';
   const isCustom = entry && entry.providerCustom;
   const isDeepSeekCompact = entry && entry.provider === 'deepseek' && entry.simpleMode;
 
   // Resize widget height
   elWidget.classList.toggle('widget-codex', Boolean(isCodex));
   elWidget.classList.toggle('widget-codex-edu', Boolean(isCodexEdu));
+  elWidget.classList.toggle('widget-openai', Boolean(isOpenAI));
   elWidget.classList.toggle('widget-compact', Boolean(isDeepSeekCompact));
   elWidget.classList.toggle('widget-custom', Boolean(isCustom));
   elWidget.classList.toggle('entry-list-disabled', !entryListEnabled);
@@ -160,15 +166,18 @@ function applyTranslations() {
     elFiveHourSection.classList.toggle('hidden', !isCodexEdu);
     elCreditsRow.classList.toggle('hidden', Boolean(isCodexEdu));
   } else if (!isCustom) {
-    document.getElementById('lbl-total').textContent = t('totalBalance');
-    document.getElementById('lbl-granted').textContent = t('granted');
-    document.getElementById('lbl-topped').textContent = t('toppedUp');
+    document.getElementById('lbl-total').textContent = isOpenAI ? t('currentMonthSpend') : t('totalBalance');
+    document.getElementById('lbl-granted').textContent = isOpenAI ? t('currentMonthTokens') : t('granted');
+    document.getElementById('lbl-topped').textContent = isOpenAI ? t('currentMonthRequests') : t('toppedUp');
   }
 
   document.getElementById('empty-msg').textContent = t('noEntries');
   document.getElementById('btn-open-settings').textContent = t('openSettings');
-  btnDeepSeekDashboard.textContent = t('dashboard');
-  btnDeepSeekDashboard.classList.toggle('hidden', !entry || entry.provider !== 'deepseek' || isDeepSeekCompact);
+  btnProviderDashboard.textContent = t('dashboard');
+  btnProviderDashboard.classList.toggle(
+    'hidden',
+    !entry || (entry.provider !== 'deepseek' && entry.provider !== 'openai') || isDeepSeekCompact
+  );
   elTotal.parentElement.title = isDeepSeekCompact
     ? (currentLang === 'zh-CN' ? '双击打开官网仪表盘' : 'Double-click to open usage dashboard')
     : '';
@@ -213,13 +222,14 @@ function setLoading() {
     el.textContent = '--';
     el.classList.add('loading');
     el.classList.remove('codex-value');
+    el.classList.remove('openai-value');
   });
   elError.classList.add('hidden');
   if (isCustom) {
     document.getElementById('lbl-total').parentElement.classList.add('hidden');
     document.getElementById('lbl-granted').parentElement.classList.add('hidden');
     document.getElementById('lbl-topped').parentElement.classList.add('hidden');
-    btnDeepSeekDashboard.classList.add('hidden');
+    btnProviderDashboard.classList.add('hidden');
     renderCustomTemplate(entry);
     elCustomBlocks.querySelectorAll('.custom-balance-value').forEach(el => {
       el.textContent = '--';
@@ -253,12 +263,15 @@ function displayBalance(balance, provider) {
     displayCodexBalance(balance);
   } else if (balance.provider === 'custom') {
     displayCustomBalance(balance);
+  } else if (balance.provider === 'openai') {
+    displayOpenAIBalance(balance);
   } else {
     elTotal.textContent = balance.total_balance.toFixed(2);
     elGranted.textContent = balance.granted_balance.toFixed(2);
     elTopped.textContent = balance.topped_up_balance.toFixed(2);
     [elTotal, elGranted, elTopped].forEach(el => {
       el.classList.remove('codex-value');
+      el.classList.remove('openai-value');
       el.classList.remove('loading');
     });
     elError.classList.add('hidden');
@@ -273,14 +286,14 @@ function applyDeepSeekSimpleState() {
   document.getElementById('lbl-total').classList.remove('hidden');
   document.getElementById('lbl-granted').parentElement.classList.toggle('hidden', Boolean(compact));
   document.getElementById('lbl-topped').parentElement.classList.toggle('hidden', Boolean(compact));
-  btnDeepSeekDashboard.classList.toggle('hidden', Boolean(compact));
+  btnProviderDashboard.classList.toggle('hidden', Boolean(compact));
 }
 
 function displayCustomBalance(balance) {
   document.getElementById('lbl-total').parentElement.classList.add('hidden');
   document.getElementById('lbl-granted').parentElement.classList.add('hidden');
   document.getElementById('lbl-topped').parentElement.classList.add('hidden');
-  btnDeepSeekDashboard.classList.add('hidden');
+  btnProviderDashboard.classList.add('hidden');
   renderCustomTemplate(currentEntry());
   (balance.customItems || []).forEach(item => {
     if (item.type !== 'balance') return;
@@ -340,6 +353,27 @@ function displayCodexBalance(b) {
     elCredits.textContent = `$${(b.credits_balance || 0).toFixed(2)}`;
   }
   elErrorCodex.classList.add('hidden');
+}
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString(currentLang === 'zh-CN' ? 'zh-CN' : 'en-US');
+}
+
+function formatOpenAICost(value, currency) {
+  const amount = Number(value || 0).toFixed(2);
+  return String(currency || 'USD').toUpperCase() === 'USD' ? `$${amount}` : `${String(currency || 'USD').toUpperCase()} ${amount}`;
+}
+
+function displayOpenAIBalance(balance) {
+  elTotal.textContent = formatOpenAICost(balance.current_month_spend, balance.current_month_currency);
+  elGranted.textContent = formatCount(balance.current_month_tokens);
+  elTopped.textContent = formatCount(balance.current_month_requests);
+  [elTotal, elGranted, elTopped].forEach(el => {
+    el.classList.remove('codex-value');
+    el.classList.add('openai-value');
+    el.classList.remove('loading');
+  });
+  elError.classList.add('hidden');
 }
 
 // --- Codex helpers ---
@@ -549,7 +583,11 @@ function toggleDropdown(event) {
 elLogo.addEventListener('click', toggleDropdown);
 
 btnRefresh.addEventListener('click', refreshBalance);
-btnDeepSeekDashboard.addEventListener('click', () => window.api.openDeepSeekDashboard());
+btnProviderDashboard.addEventListener('click', () => {
+  const entry = currentEntry();
+  if (entry && entry.provider === 'deepseek') window.api.openDeepSeekDashboard();
+  if (entry && entry.provider === 'openai') window.api.openExternalUrl('https://platform.openai.com/usage');
+});
 elCustomBlocks.addEventListener('click', event => {
   const btn = event.target.closest('.custom-dashboard-btn');
   if (!btn) return;

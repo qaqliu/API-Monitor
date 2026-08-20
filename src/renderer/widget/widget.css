@@ -424,6 +424,10 @@ body {
   content: none;
 }
 
+.balance-row .value.openai-value::before {
+  content: none;
+}
+
 .error {
   background: rgba(255, 107, 107, 0.15);
   border: 1px solid rgba(255, 107, 107, 0.3);

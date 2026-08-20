@@ -45,5 +45,6 @@ function getRuntimeCustomProvider(id) {
 register(require('./deepseek'));
 register(require('./codex'));
 register(require('./codex-edu'));
+register(require('./openai'));
 
 module.exports = { register, getProvider, getAllProviders, fetchBalanceByEntry };

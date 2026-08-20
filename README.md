@@ -15,6 +15,7 @@ API Monitor is a lightweight Electron desktop widget for tracking API balances, 
 | DeepSeek | Total, granted, and topped-up account balance in CNY |
 | Codex (ChatGPT) | 7-day usage window plus credit balance |
 | Codex Edu | Education plan 5-hour and 7-day usage windows |
+| OpenAI | Current calendar-month spend, total tokens, and request count |
 | Custom Provider | User-defined balance rows and dashboard links from JSON APIs |
 
 ### Highlights
@@ -25,6 +26,7 @@ API Monitor is a lightweight Electron desktop widget for tracking API balances, 
 - **DeepSeek dashboard shortcut**: open the official usage dashboard from the widget.
 - **Codex proxy-friendly requests**: provider HTTP requests prefer Electron's network stack so they can use system proxy/PAC settings.
 - **Codex Edu support**: add a separate education-plan entry that reads the same Codex auth file and displays Edu-specific quota windows.
+- **OpenAI organization usage**: show the current calendar month's spend, total tokens, and request count with an official usage dashboard shortcut. Requires an organization Admin API Key.
 - **Custom Providers**: configure providers in Settings with a base URL, cropped logo, balance blocks, dashboard blocks, and drag-and-drop ordering.
 - **Saved custom widget layout**: custom provider widget size and UI template are generated when the provider is saved, then reused during refresh.
 - **Auto-refresh**: per-entry refresh interval or global default.
@@ -61,6 +63,10 @@ Build output is written to `dist/` and includes both the NSIS installer and port
 
 Custom providers call `baseUrl + relativePath` with `Authorization: Bearer <API Key>` and extract numbers using simple JSON paths such as `balance_infos[0].total_balance`.
 
+### OpenAI Setup
+
+Add an **OpenAI** monitoring entry and enter an organization **Admin API Key**. The provider queries the official organization Usage and Costs APIs for the current calendar month, then displays spend, input plus output tokens, and model request count. The widget's **Dashboard** button opens the official [OpenAI Usage dashboard](https://platform.openai.com/usage). The API does not expose the billing-page credit balance used by the platform UI, so this provider does not display that balance.
+
 ### Built-in Provider Development
 
 For code-level built-in providers:
@@ -96,6 +102,8 @@ API Monitor 是一个轻量级 Electron 桌面悬浮小组件，用于监控 API
 | --- | --- |
 | DeepSeek | 人民币总余额、赠送余额、充值余额 |
 | Codex (ChatGPT) | 7 天用量窗口，以及积分额度 |
+| Codex Edu | 教育版 5 小时和 7 天用量窗口 |
+| OpenAI | 本自然月消费、Token 总量、请求数 |
 | 自定义 Provider | 从 JSON API 中提取用户自定义余额行，并添加官网仪表盘链接 |
 
 ### 功能亮点
@@ -105,6 +113,7 @@ API Monitor 是一个轻量级 Electron 桌面悬浮小组件，用于监控 API
 - **DeepSeek 精简模式**：更窄的小组件，只显示总余额，同时保留刷新按钮和刷新时间。
 - **DeepSeek 官网仪表盘入口**：可从小组件直接打开官方 usage 页面。
 - **Codex 代理兼容**：Provider HTTP 请求优先走 Electron 网络栈，便于继承系统代理/PAC 设置。
+- **OpenAI 组织用量**：使用组织 Admin API Key 展示本自然月消费、Token 总量和请求数，并提供官网 Usage 仪表盘入口。
 - **自定义 Provider**：可在设置页配置 Base URL、裁剪 Logo、余额积木、官网仪表盘积木和拖拽排序。
 - **自定义小组件布局缓存**：保存 Provider 时生成并保存小组件高度和 UI 模板，刷新时只更新数值。
 - **自动刷新**：支持每个条目独立刷新间隔，也可使用全局默认值。
@@ -140,6 +149,10 @@ npm run build
 5. 打开 **设置 > 监控**，新增条目，搜索并选择该自定义 Provider，然后填写 API Key。
 
 自定义 Provider 会使用 `baseUrl + relativePath` 请求接口，并通过 `Authorization: Bearer <API Key>` 传入密钥。JSON 路径示例：`balance_infos[0].total_balance`。
+
+### OpenAI 配置
+
+新增 **OpenAI** 监控条目并填写组织级 **Admin API Key**。Provider 会请求官方组织 Usage 和 Costs 接口，按本地自然月汇总消费、输入加输出 Token 以及模型请求数。组件中的“官网仪表盘”按钮会打开 [OpenAI Usage 官网](https://platform.openai.com/usage)。目前官方 API 未提供平台账单页中的 API credit balance，因此不在组件内显示该余额。
 
 ### 内置 Provider 开发
 

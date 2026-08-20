@@ -109,6 +109,10 @@ function updateTrayTooltip(balance, entry) {
     } else if (balance.provider === 'custom') {
       const first = (balance.customItems || [])[0];
       tray.setToolTip(`${name}\n${first ? `${first.label}: ${Number(first.value || 0).toFixed(2)}` : 'Custom provider'}`);
+    } else if (balance.provider === 'openai') {
+      tray.setToolTip(
+        `${name}\n${balance.current_month_currency || 'USD'} ${Number(balance.current_month_spend || 0).toFixed(2)} this month`
+      );
     } else {
       tray.setToolTip(
         `${name}\n\xA5${balance.total_balance.toFixed(2)} (Granted: \xA5${balance.granted_balance.toFixed(2)})`
