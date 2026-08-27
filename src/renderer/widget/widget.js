@@ -50,8 +50,8 @@ let customTemplateKey = '';
 const T = {
   en: {
     totalBalance: 'Total Balance', granted: 'Granted', toppedUp: 'Topped Up',
-    currentMonthSpend: 'This Month Spend', currentMonthTokens: 'This Month Tokens',
-    currentMonthRequests: 'This Month Requests',
+    currentMonthSpend: 'Monthly Spend', currentMonthTokens: 'Monthly Tokens',
+    currentMonthRequests: 'Monthly Requests',
     fiveHourUsage: '5h Usage',
     sevenDayUsage: '7d Usage', credits: 'Credits',
     remaining: 'remaining',
@@ -213,6 +213,7 @@ function showBalanceView() {
 function setLoading() {
   const entry = currentEntry();
   const isCustom = entry && entry.providerCustom;
+  const isOpenAI = entry && entry.provider === 'openai';
   // DeepSeek
   document.getElementById('lbl-total').parentElement.classList.remove('hidden');
   document.getElementById('lbl-granted').parentElement.classList.remove('hidden');
@@ -223,6 +224,7 @@ function setLoading() {
     el.classList.add('loading');
     el.classList.remove('codex-value');
     el.classList.remove('openai-value');
+    if (isOpenAI) el.classList.add('openai-value');
   });
   elError.classList.add('hidden');
   if (isCustom) {
@@ -360,7 +362,9 @@ function formatCount(value) {
 }
 
 function formatOpenAICost(value, currency) {
-  const amount = Number(value || 0).toFixed(2);
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '--';
+  const amount = numericValue.toFixed(2);
   return String(currency || 'USD').toUpperCase() === 'USD' ? `$${amount}` : `${String(currency || 'USD').toUpperCase()} ${amount}`;
 }
 

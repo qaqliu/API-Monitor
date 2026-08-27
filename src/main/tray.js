@@ -4,6 +4,12 @@ const fs = require('fs');
 
 let tray = null;
 
+function formatOpenAICost(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '--';
+  return numericValue.toFixed(2);
+}
+
 function createTrayIcon() {
   const pngPath = path.join(__dirname, '..', '..', 'assets', 'tray-icon.png');
   try {
@@ -111,7 +117,7 @@ function updateTrayTooltip(balance, entry) {
       tray.setToolTip(`${name}\n${first ? `${first.label}: ${Number(first.value || 0).toFixed(2)}` : 'Custom provider'}`);
     } else if (balance.provider === 'openai') {
       tray.setToolTip(
-        `${name}\n${balance.current_month_currency || 'USD'} ${Number(balance.current_month_spend || 0).toFixed(2)} this month`
+        `${name}\n${balance.current_month_currency || 'USD'} ${formatOpenAICost(balance.current_month_spend)} this month`
       );
     } else {
       tray.setToolTip(

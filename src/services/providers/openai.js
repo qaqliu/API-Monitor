@@ -10,9 +10,12 @@ const DASHBOARD_URL = 'https://platform.openai.com/usage';
 function getCurrentMonthRange() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  // The organization APIs return daily buckets. Move the exclusive end past
+  // the current UTC bucket so today's finalized/estimated cost is included.
+  const nextUtcDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
   return {
     startTime: Math.floor(monthStart.getTime() / 1000),
-    endTime: Math.floor(now.getTime() / 1000),
+    endTime: Math.floor(nextUtcDay / 1000),
   };
 }
 

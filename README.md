@@ -13,8 +13,8 @@ API Monitor is a lightweight Electron desktop widget for tracking API balances, 
 | Provider | What it monitors |
 | --- | --- |
 | DeepSeek | Total, granted, and topped-up account balance in CNY |
-| Codex (ChatGPT) | 7-day usage window plus credit balance |
-| Codex Edu | Education plan 5-hour and 7-day usage windows |
+| Codex (Without 5h Usage) | 7-day usage window plus credit balance |
+| Codex (With 5h Usage) | 5-hour and 7-day usage windows |
 | OpenAI | Current calendar-month spend, total tokens, and request count |
 | Custom Provider | User-defined balance rows and dashboard links from JSON APIs |
 
@@ -25,7 +25,7 @@ API Monitor is a lightweight Electron desktop widget for tracking API balances, 
 - **DeepSeek compact mode**: a smaller balance-only widget that still keeps refresh controls.
 - **DeepSeek dashboard shortcut**: open the official usage dashboard from the widget.
 - **Codex proxy-friendly requests**: provider HTTP requests prefer Electron's network stack so they can use system proxy/PAC settings.
-- **Codex Edu support**: add a separate education-plan entry that reads the same Codex auth file and displays Edu-specific quota windows.
+- **Codex usage variants**: choose a Codex entry with or without the 5-hour usage window while sharing the same auth file flow.
 - **OpenAI organization usage**: show the current calendar month's spend, total tokens, and request count with an official usage dashboard shortcut. Requires an organization Admin API Key.
 - **Custom Providers**: configure providers in Settings with a base URL, cropped logo, balance blocks, dashboard blocks, and drag-and-drop ordering.
 - **Saved custom widget layout**: custom provider widget size and UI template are generated when the provider is saved, then reused during refresh.
@@ -101,8 +101,8 @@ API Monitor 是一个轻量级 Electron 桌面悬浮小组件，用于监控 API
 | Provider | 监控内容 |
 | --- | --- |
 | DeepSeek | 人民币总余额、赠送余额、充值余额 |
-| Codex (ChatGPT) | 7 天用量窗口，以及积分额度 |
-| Codex Edu | 教育版 5 小时和 7 天用量窗口 |
+| Codex (Without 5h Usage) | 7 天用量窗口，以及积分额度 |
+| Codex (With 5h Usage) | 5 小时和 7 天用量窗口 |
 | OpenAI | 本自然月消费、Token 总量、请求数 |
 | 自定义 Provider | 从 JSON API 中提取用户自定义余额行，并添加官网仪表盘链接 |
 

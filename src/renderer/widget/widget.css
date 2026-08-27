@@ -406,11 +406,16 @@ body {
   font-size: 16px;
   font-weight: 600;
   line-height: 20px;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
   color: #4caf84;
   font-variant-numeric: tabular-nums;
 }
 
 .balance-row .value::before {
+  display: inline-block;
+  line-height: 20px;
   content: '\A5 ';
   font-size: 13px;
   opacity: 0.7;

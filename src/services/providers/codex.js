@@ -1,11 +1,11 @@
-// Codex (ChatGPT) 用量查询 Provider
+// Codex 用量查询 Provider
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const { fetchJsonWithRetry } = require('./http');
 
 const PROVIDER_ID = 'codex';
-const PROVIDER_NAME = 'Codex (ChatGPT)';
+const PROVIDER_NAME = 'Codex (Without 5h Usage)';
 const WEEK_SECONDS = 7 * 24 * 60 * 60;
 const FIVE_HOUR_SECONDS = 5 * 60 * 60;
 
